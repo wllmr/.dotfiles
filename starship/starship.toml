@@ -1,5 +1,9 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# Preserve all default prompt modules, with timing at the right of the first line.
+# Explicit modules are excluded from $all automatically.
+format = "$all$fill$cmd_duration$time$line_break$character"
+
 [aws]
 symbol = " "
 
@@ -312,3 +316,18 @@ symbol = " "
 
 [zig]
 symbol = " "
+
+[fill]
+symbol = " "
+
+[cmd_duration]
+min_time = 1000
+show_milliseconds = false
+format = "[󰔛 took $duration]($style) "
+style = "bold yellow"
+
+[time]
+disabled = false
+time_format = "%H:%M:%S"
+format = "[ $time]($style)"
+style = "dimmed white"
