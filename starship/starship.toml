@@ -1,7 +1,8 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Preserve the default left prompt; show timing information on the right.
-right_format = "$cmd_duration$time"
+# Preserve all default prompt modules, with timing at the right of the first line.
+# Explicit modules are excluded from $all automatically.
+format = "$all$fill$cmd_duration$time$line_break$character"
 
 [aws]
 symbol = " "
@@ -315,6 +316,9 @@ symbol = " "
 
 [zig]
 symbol = " "
+
+[fill]
+symbol = " "
 
 [cmd_duration]
 min_time = 1000
