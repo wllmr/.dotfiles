@@ -31,7 +31,7 @@ cd ~/.dotfiles
 bash install.sh
 ```
 
-The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, ripgrep, fd, jq, Mike Farah's yq v4, wget, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
+The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, ripgrep, fd, jq, Mike Farah's yq v4, wget, Docker CLI/Compose, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
 
 - Arch: `pacman` (`go-yq` supplies Mike Farah's yq).
 - Kali: `apt` for ripgrep/jq and optional fd-find; the official Go yq binary installs into `~/.local/bin`.
@@ -50,6 +50,16 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 `rg` searches files, `fd` finds files, `jq` processes JSON, and `yq` v4 processes YAML. On Ubuntu/Kali, the `fd-find` executable is often named `fdfind`; shared setup links `~/.local/bin/fd` to that executable. The Go-based `yq` is used consistently instead of the differently implemented Debian `yq` package. If optional packages are unavailable, installation logs a warning.
 
+## Docker
+
+Docker commands are installed on all platforms. On native Linux, the `docker` package (Arch) or `docker.io` (Ubuntu/Kali) provides the Docker Engine package, but this installer does **not** enable/start the daemon or grant users access to the Docker socket. To use Docker without sudo on native Linux, review the security implications of membership in the `docker` group (effectively root-level access), and configure the daemon separately.
+
+**WSL2:** Use Docker Desktop WSL integration (or configure an independent WSL Docker daemon manually). Installing a CLI does not automatically provide a running engine. Docker Desktop may already expose its own CLI; avoid using two competing daemons.
+
+**macOS:** Homebrew installs Docker CLI and Compose, but not a running Docker engine. Install Docker Desktop or another compatible engine separately and ensure Compose is discoverable by your Docker client.
+
+`wget` was already installed for all four systems and remains included.
+
 ## Verify
 
 ```bash
@@ -64,6 +74,9 @@ rg --version
 fd --version
 jq --version
 yq --version
+wget --version
+docker --version
+docker compose version
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
