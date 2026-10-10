@@ -29,14 +29,14 @@ cd ~/.dotfiles
 bash install.sh
 ```
 
-The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby and curl where available.
+The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
 
 - Arch: `pacman`.
 - Kali: `apt`, with its own installer and package availability checks.
 - Ubuntu: `apt`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
 - macOS: `brew`. Homebrew must already be installed.
 
-Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig` and `~/.config/starship.toml`, backing up existing files before replacing them. It installs SCM Breeze if missing. The OS script sets Zsh as the non-root user's default login shell.
+Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig` and `~/.config/starship.toml`, backing up existing files before replacing them. It installs SCM Breeze if missing. Rust is installed through the official rustup installer and managed consistently across all four OSes; Linux installs build tools for linking. The OS script sets Zsh as the non-root user's default login shell.
 
 The installer can be rerun without duplicating symlinks. SCM Breeze may prompt during its initial installation. Changing the default shell can request your password/sudo access.
 
@@ -48,6 +48,8 @@ starship --version
 gh --version
 fzf --version
 wget --version
+rustc --version
+cargo --version
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
