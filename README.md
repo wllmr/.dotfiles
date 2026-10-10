@@ -31,7 +31,7 @@ cd ~/.dotfiles
 bash install.sh
 ```
 
-The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, ripgrep, fd, jq, Mike Farah's yq v4, wget, Docker CLI/Compose, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
+The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, ripgrep, fd, jq, Mike Farah's yq v4, wget, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
 
 - Arch: `pacman` (`go-yq` supplies Mike Farah's yq).
 - Kali: `apt` for ripgrep/jq and optional fd-find; the official Go yq binary installs into `~/.local/bin`.
@@ -50,15 +50,18 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 `rg` searches files, `fd` finds files, `jq` processes JSON, and `yq` v4 processes YAML. On Ubuntu/Kali, the `fd-find` executable is often named `fdfind`; shared setup links `~/.local/bin/fd` to that executable. The Go-based `yq` is used consistently instead of the differently implemented Debian `yq` package. If optional packages are unavailable, installation logs a warning.
 
-## Docker
+## Optional Docker (no Docker Desktop)
 
-Docker commands are installed on all platforms. On native Linux, the `docker` package (Arch) or `docker.io` (Ubuntu/Kali) provides the Docker Engine package, but this installer does **not** enable/start the daemon or grant users access to the Docker socket. To use Docker without sudo on native Linux, review the security implications of membership in the `docker` group (effectively root-level access), and configure the daemon separately.
+Run `./install.sh` interactively and toggle Docker, or specify `./install.sh --with-docker`. Docker is off by default for non-interactive installs (or use `--no-docker`).
 
-**WSL2:** Use Docker Desktop WSL integration (or configure an independent WSL Docker daemon manually). Installing a CLI does not automatically provide a running engine. Docker Desktop may already expose its own CLI; avoid using two competing daemons.
+- **Arch Linux / native Linux**: installs `docker` and Compose packages. The local daemon is not automatically enabled or started. On a systemd installation, use `sudo systemctl enable --now docker` when you want to enable it.
+- **Ubuntu / Kali**: installs `docker.io` and `docker-compose-v2` when available in configured apt repositories. On native Linux with systemd, use `sudo systemctl enable --now docker` if the daemon is not running.
+- **WSL2**: Docker Desktop is **not required or used**. Run a Linux Docker Engine inside your WSL distribution. WSL systemd must be enabled for `systemctl` commands to work: add `[boot]` followed by `systemd=true` to `/etc/wsl.conf`, restart the distro with `wsl --shutdown` from Windows PowerShell, then `sudo systemctl enable --now docker`. Check `ps -p 1 -o comm=` to verify systemd. WSL daemon operation also depends on kernel capabilities/network configuration.
+- **macOS**: installs `docker`, `docker-compose`, and **Colima**, a Docker-compatible VM backend. Start it with `colima start`; stop it with `colima stop`. No Docker Desktop installation is involved.
 
-**macOS:** Homebrew installs Docker CLI and Compose, but not a running Docker engine. Install Docker Desktop or another compatible engine separately and ensure Compose is discoverable by your Docker client.
+The installer does **not** add your account to the `docker` group or automatically start a daemon. Membership of the Linux `docker` group permits root-equivalent access to the host, so use `sudo docker ...` or explicitly configure permissions after reviewing the risk.
 
-`wget` was already installed for all four systems and remains included.
+`wget` is always installed on all four platforms.
 
 ## Verify
 
@@ -74,9 +77,10 @@ rg --version
 fd --version
 jq --version
 yq --version
-wget --version
+# When Docker is selected and an engine is running:
 docker --version
 docker compose version
+docker info
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
