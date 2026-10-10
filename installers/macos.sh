@@ -10,7 +10,14 @@ install_packages() {
       exit 1
     fi
   fi
-  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby curl
+  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby curl ripgrep fd jq yq
+}
+
+install_optional_packages() {
+  if [[ "$INSTALL_DOCKER" == 1 ]]; then
+    brew install docker docker-compose colima
+    log "Colima installed. Start the Docker-compatible engine with: colima start"
+  fi
 }
 
 configure_default_shell() {
