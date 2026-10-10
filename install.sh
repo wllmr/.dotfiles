@@ -40,10 +40,10 @@ install_scm_breeze
 configure_default_shell
 log "Installation finished."
 if [[ -t 0 && -t 1 ]]; then
-  printf 'Start Zsh with Starship now? [y/N] '
+  printf 'Start Zsh with Starship now? [Y/n] '
   read -r answer
   case "$answer" in
-    y|Y|yes|YES|Yes)
+    ""|y|Y|yes|YES|Yes)
       log "Starting Zsh. Type 'exit' to return to your previous shell."
       exec zsh -l
       ;;
