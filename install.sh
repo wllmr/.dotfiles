@@ -38,6 +38,7 @@ INSTALL_DOCKER=0
 INSTALL_CODEX=0
 INSTALL_CLAUDE=0
 INSTALL_NODE=0
+NODE_VERSION='lts/*'
 select_optional_tools() {
   local selected
   if ! command -v fzf >/dev/null 2>&1; then
@@ -77,18 +78,32 @@ for flag in "$@"; do
     --with-codex) INSTALL_CODEX=1 ;;
     --no-codex) INSTALL_CODEX=0 ;;
     --with-node) INSTALL_NODE=1 ;;
+    --node-version=*) NODE_VERSION="${flag#*=}"; INSTALL_NODE=1 ;;
     --no-node) INSTALL_NODE=0 ;;
     --with-claude) INSTALL_CLAUDE=1 ;;
     --no-claude) INSTALL_CLAUDE=0 ;;
-    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude] [--with-node|--no-node]"; exit 2 ;;
+    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude] [--with-node|--no-node] [--node-version=VERSION]"; exit 2 ;;
   esac
 done
-export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_NODE
+if [[ ! "$NODE_VERSION" =~ ^(lts/\*|lts/[a-zA-Z]+|node|stable|[0-9]+(\.[0-9]+){0,2})$ ]]; then
+  log "Invalid Node version: $NODE_VERSION (use lts/*, 22, 22.14, or 22.14.0)"
+  exit 2
+fi
+export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_NODE NODE_VERSION
 source "$DOTFILES_DIR/installers/ai-tools.sh"
 
 install_packages
 if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
   select_optional_tools
+  if [[ "$INSTALL_NODE" == 1 || "$INSTALL_CODEX" == 1 ]]; then
+    printf 'Node.js version to install and make default [lts/*]: '
+    IFS= read -r requested_version || requested_version=''
+    NODE_VERSION="${requested_version:-lts/*}"
+    if [[ ! "$NODE_VERSION" =~ ^(lts/\*|lts/[a-zA-Z]+|node|stable|[0-9]+(\.[0-9]+){0,2})$ ]]; then
+      log "Invalid Node version: $NODE_VERSION"
+      exit 2
+    fi
+  fi
 fi
 install_optional_packages
 install_optional_node
