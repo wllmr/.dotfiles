@@ -36,6 +36,7 @@ source "$installer"
 install_packages
 install_rust
 install_shared_config
+configure_fd
 install_scm_breeze
 configure_default_shell
 log "Installation finished."
