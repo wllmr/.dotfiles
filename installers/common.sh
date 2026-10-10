@@ -68,11 +68,56 @@ install_shared_config() {
   link_dotfile "$DOTFILES_DIR/vim/colors/oxocarbon.vim" "$HOME/.vim/colors/oxocarbon.vim"
 }
 
+# Install only the Git plugin and its dependencies, not the prompt/framework.
+# Pin the same upstream revision for Linux and macOS.
+install_git_shortcuts() {
+  local base="${1:-$HOME/.local/share/dotfiles/oh-my-zsh}"
+  local revision=60c9a7a839b790cd905d0fd4419435124fd1bdc0
+  local target="$base/$revision" staging file
+  if [[ ! -d "$target" ]]; then
+    mkdir -p "$base"
+    staging="$(mktemp -d "$base/.download.XXXXXXXX")"
+    for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
+      mkdir -p "$staging/$(dirname "$file")"
+      if ! curl --fail --silent --show-error --location \
+        "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/$revision/$file" -o "$staging/$file"; then
+        rm -rf -- "$staging"
+        log "ERROR: Unable to download the shared Git plugin"
+        return 1
+      fi
+    done
+    mv "$staging" "$target"
+  fi
+  link_dotfile "$target" "$base/current"
+}
+
+configure_scm_breeze_config() {
+  local config_dir="${1:-$HOME}"
+  local target="$config_dir/.git.scmbrc" personal="$config_dir/.git.scmbrc.local"
+  local source_config="$DOTFILES_DIR/zsh/.git.scmbrc"
+  if [[ -L "$target" && "$(readlink "$target")" == "$source_config" ]]; then return; fi
+  if [[ -f "$target" ]]; then
+    if [[ -e "$personal" || -L "$personal" ]]; then
+      log "ERROR: Both $target and $personal exist; reconcile them before rerunning."
+      return 1
+    fi
+    cp -L "$target" "$personal"
+    log "Preserved SCM Breeze preferences in $personal"
+  fi
+  link_dotfile "$source_config" "$target"
+}
+
 install_scm_breeze() {
-  if [[ -f "$HOME/.scm_breeze/scm_breeze.sh" ]]; then return; fi
+  if [[ -f "$HOME/.scm_breeze/scm_breeze.sh" && -s "$HOME/.scmbrc" && -s "$HOME/.git.scmbrc" ]]; then
+    configure_scm_breeze_config
+    return
+  fi
   if [[ ! -d "$HOME/.scm_breeze" ]]; then
     git clone --depth 1 https://github.com/scmbreeze/scm_breeze.git "$HOME/.scm_breeze"
   fi
+  # Establish ownership before upstream creates any missing preference files.
+  # In particular, a surviving .local config must not conflict with fresh defaults.
+  configure_scm_breeze_config
   log "Running SCM Breeze upstream installer without modifying managed .zshrc"
   # Upstream appends to ${ZDOTDIR:-$HOME}/.zshrc. Redirect that write
   # away from the symlinked configuration tracked in this repository.

@@ -26,7 +26,20 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 [[ -r "$HOME/.zsh_aliases" ]] && source "$HOME/.zsh_aliases"
 
-# Git shortcuts come from SCM Breeze. The installer manages its defaults.
+# Standard Git shortcuts come from a pinned Oh My Zsh Git plugin.
+# Starship owns the prompt, so the Git library's async prompt is disabled.
+git_plugin_dir="$HOME/.local/share/dotfiles/oh-my-zsh/current"
+if [[ -r "$git_plugin_dir/plugins/git/git.plugin.zsh" ]]; then
+  zstyle ':omz:alpha:lib:git' async-prompt no
+  source "$git_plugin_dir/lib/git.zsh"
+  source "$git_plugin_dir/lib/clipboard.zsh"
+  source "$git_plugin_dir/plugins/git/git.plugin.zsh"
+else
+  print -u2 'Git shortcuts are not installed. Run bash install.sh from your dotfiles repository.'
+fi
+unset git_plugin_dir
+
+# SCM Breeze adds numbered file helpers; managed settings disable standard aliases.
 [[ -s "$HOME/.scm_breeze/scm_breeze.sh" ]] && source "$HOME/.scm_breeze/scm_breeze.sh"
 
 if (( $+commands[fzf] )); then
