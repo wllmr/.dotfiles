@@ -50,25 +50,10 @@ install_optional_node_package_managers() {
     fi
   fi
   if [[ "$INSTALL_BUN" == 1 ]]; then
-    if [[ ! -x "$HOME/.bun/bin/bun" ]] && ! command -v bun >/dev/null 2>&1; then
-      # Bun's official installer needs unzip on Linux.
-      if ! command -v unzip >/dev/null 2>&1; then
-        log "WARNING: Bun installer requires unzip; install unzip and retry."
-        return 0
-      fi
-      local script
-      script="$(mktemp)"
-      if curl -fsSL https://bun.com/install -o "$script"; then
-        bash "$script"
-      else
-        log "WARNING: Could not download Bun installer"
-      fi
-      rm -f "$script"
+    if ! command -v bun >/dev/null 2>&1; then
+      npm install --global bun
     fi
-    if [[ -x "$HOME/.bun/bin/bun" ]]; then
-      export BUN_INSTALL="$HOME/.bun"
-      export PATH="$BUN_INSTALL/bin:$PATH"
-    fi
+    log "Bun: $(bun --version)"
   fi
 }
 
