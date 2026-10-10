@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 install_packages() {
-  sudo pacman -Syu --needed zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting github-cli fzf starship eza bat zoxide wget git vim ruby curl ca-certificates
+  sudo pacman -Syu --needed zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting github-cli fzf starship eza bat zoxide wget git vim ruby curl ca-certificates base-devel
 }
 
 configure_default_shell() {
