@@ -1,12 +1,44 @@
 #!/usr/bin/env bash
 # Optional AI developer tools. No authentication is performed by this installer.
+# Node.js is installed via nvm only when selected (or required by Codex).
+install_optional_node() {
+  if [[ "$INSTALL_NODE" != 1 && "$INSTALL_CODEX" != 1 ]]; then return; fi
+  export NVM_DIR="$HOME/.nvm"
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    local script
+    script="$(mktemp)"
+    if ! curl --fail --silent --show-error --location \
+      https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh -o "$script"; then
+      rm -f "$script"
+      log "ERROR: Unable to download nvm installer"
+      return 1
+    fi
+    PROFILE=/dev/null bash "$script"
+    rm -f "$script"
+  fi
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    log "ERROR: nvm was not installed successfully"
+    return 1
+  fi
+  # nvm is a shell function: loading it here exposes node/npm immediately.
+  # shellcheck disable=SC1091
+  source "$NVM_DIR/nvm.sh"
+  nvm install "$NODE_VERSION"
+  # Pin the actual installed version as the default for future shells.
+  local installed_version
+  installed_version="$(node --version)"
+  nvm alias default "$installed_version"
+  nvm use default
+  log "Node.js default: $(node --version); npm: $(npm --version)"
+}
+
 install_optional_ai_tools() {
   if [[ "$INSTALL_CODEX" == 1 ]]; then
     if has codex || [[ -x "$HOME/.local/bin/codex" ]]; then
       log "Codex CLI already installed; skipping"
     else
       if ! has npm; then
-        log "WARNING: Codex CLI requires npm. Install Node.js/npm and rerun with --with-codex."
+        log "ERROR: npm not available after Node.js setup; Codex cannot be installed."
       else
         mkdir -p "$HOME/.local"
         npm install --global --prefix "$HOME/.local" @openai/codex

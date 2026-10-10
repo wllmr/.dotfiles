@@ -6,6 +6,9 @@ elif [[ -x /usr/local/bin/brew ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+# nvm is a shell function; initialize it for interactive Zsh sessions.
+export NVM_DIR="$HOME/.nvm"
+[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
 export EDITOR=vim
 export VISUAL=vim
 HISTFILE="$HOME/.zsh_history"
