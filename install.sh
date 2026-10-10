@@ -33,35 +33,47 @@ case "$(uname -s)" in
 esac
 
 source "$installer"
-# Optional packages are selected before any installation begins.
-# Non-interactive installs default to no optional packages.
+# Optional software is off by default for unattended installations.
 INSTALL_DOCKER=0
-case "${1:-}" in
-  --with-docker) INSTALL_DOCKER=1 ;;
-  --no-docker|"") ;;
-  *) log "Usage: ./install.sh [--with-docker|--no-docker]"; exit 2 ;;
-esac
+INSTALL_CODEX=0
+INSTALL_CLAUDE=0
+show_optional_tools() {
+  printf '\nOptional tools (toggle with 1, 2, or 3; Enter to continue):\n'
+  printf '  1. [%s] Docker (local Engine on Linux / Colima on macOS)\n' "$([[ "$INSTALL_DOCKER" == 1 ]] && printf x || printf ' ')"
+  printf '  2. [%s] OpenAI Codex CLI\n' "$([[ "$INSTALL_CODEX" == 1 ]] && printf x || printf ' ')"
+  printf '  3. [%s] Claude Code CLI\n' "$([[ "$INSTALL_CLAUDE" == 1 ]] && printf x || printf ' ')"
+}
+for flag in "$@"; do
+  case "$flag" in
+    --with-docker) INSTALL_DOCKER=1 ;;
+    --no-docker) INSTALL_DOCKER=0 ;;
+    --with-codex) INSTALL_CODEX=1 ;;
+    --no-codex) INSTALL_CODEX=0 ;;
+    --with-claude) INSTALL_CLAUDE=1 ;;
+    --no-claude) INSTALL_CLAUDE=0 ;;
+    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude]"; exit 2 ;;
+  esac
+done
 if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
   while :; do
-    printf '\nOptional tools (type 1 to toggle, Enter to continue):\n'
-    if [[ "$INSTALL_DOCKER" == 1 ]]; then
-      printf '  1. [x] Docker (local engine / Colima)\n'
-    else
-      printf '  1. [ ] Docker (local engine / Colima)\n'
-    fi
+    show_optional_tools
     printf 'Selection: '
     IFS= read -r choice || break
     case "$choice" in
       1) INSTALL_DOCKER=$((1 - INSTALL_DOCKER)) ;;
+      2) INSTALL_CODEX=$((1 - INSTALL_CODEX)) ;;
+      3) INSTALL_CLAUDE=$((1 - INSTALL_CLAUDE)) ;;
       "") break ;;
       *) printf 'Invalid selection.\n' ;;
     esac
   done
 fi
-export INSTALL_DOCKER
+export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE
+source "$DOTFILES_DIR/installers/ai-tools.sh"
 
 install_packages
 install_optional_packages
+install_optional_ai_tools
 install_rust
 install_shared_config
 configure_fd
