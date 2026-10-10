@@ -37,12 +37,34 @@ source "$installer"
 INSTALL_DOCKER=0
 INSTALL_CODEX=0
 INSTALL_CLAUDE=0
-show_optional_tools() {
-  printf '\nOptional tools (toggle with 1, 2, or 3; Enter to continue):\n'
-  printf '  1. [%s] Docker (local Engine on Linux / Colima on macOS)\n' "$([[ "$INSTALL_DOCKER" == 1 ]] && printf x || printf ' ')"
-  printf '  2. [%s] OpenAI Codex CLI\n' "$([[ "$INSTALL_CODEX" == 1 ]] && printf x || printf ' ')"
-  printf '  3. [%s] Claude Code CLI\n' "$([[ "$INSTALL_CLAUDE" == 1 ]] && printf x || printf ' ')"
+select_optional_tools() {
+  local selected
+  if ! command -v fzf >/dev/null 2>&1; then
+    log "WARNING: fzf unavailable; use --with-docker, --with-codex or --with-claude."
+    return
+  fi
+  # fzf is installed by install_packages before this menu runs.
+  # TAB toggles entries; ENTER confirms; ESC skips the optional tools.
+  selected="$(printf '%s\n' \
+    'Docker (local Engine on Linux / Colima on macOS)' \
+    'OpenAI Codex CLI' \
+    'Claude Code CLI' \
+    | fzf --multi --no-sort --no-info \
+        --prompt='Optional tools> ' \
+        --header='TAB to select/deselect | ENTER to install | ESC to skip' \
+        --bind='tab:toggle+down' \
+        --height=~40% --layout=reverse)" || return 0
+  case "$selected" in
+    *'Docker (local Engine on Linux / Colima on macOS)'*) INSTALL_DOCKER=1 ;;
+  esac
+  case "$selected" in
+    *'OpenAI Codex CLI'*) INSTALL_CODEX=1 ;;
+  esac
+  case "$selected" in
+    *'Claude Code CLI'*) INSTALL_CLAUDE=1 ;;
+  esac
 }
+
 for flag in "$@"; do
   case "$flag" in
     --with-docker) INSTALL_DOCKER=1 ;;
@@ -54,24 +76,13 @@ for flag in "$@"; do
     *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude]"; exit 2 ;;
   esac
 done
-if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
-  while :; do
-    show_optional_tools
-    printf 'Selection: '
-    IFS= read -r choice || break
-    case "$choice" in
-      1) INSTALL_DOCKER=$((1 - INSTALL_DOCKER)) ;;
-      2) INSTALL_CODEX=$((1 - INSTALL_CODEX)) ;;
-      3) INSTALL_CLAUDE=$((1 - INSTALL_CLAUDE)) ;;
-      "") break ;;
-      *) printf 'Invalid selection.\n' ;;
-    esac
-  done
-fi
 export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE
 source "$DOTFILES_DIR/installers/ai-tools.sh"
 
 install_packages
+if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
+  select_optional_tools
+fi
 install_optional_packages
 install_optional_ai_tools
 install_rust
