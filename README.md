@@ -1,6 +1,6 @@
 # Dotfiles
 
-Shared **Zsh + Starship** development environment for Arch Linux (including WSL2), Ubuntu (including Codespaces), and macOS.
+Shared **Zsh + Starship** development environment for Arch Linux (including WSL2), Ubuntu (including Codespaces), Kali Linux, and macOS.
 
 ## Structure
 
@@ -9,6 +9,7 @@ Shared **Zsh + Starship** development environment for Arch Linux (including WSL2
 ├── install.sh                  # OS detection and orchestration
 ├── installers/
 │   ├── arch.sh                 # pacman + Linux default shell
+│   ├── kali.sh                 # Kali packages + default shell
 │   ├── ubuntu.sh               # apt + Starship fallback + default shell
 │   ├── macos.sh                # Homebrew + macOS default shell
 │   └── common.sh               # backups, symlinks, SCM Breeze
@@ -31,6 +32,7 @@ bash install.sh
 The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby and curl where available.
 
 - Arch: `pacman`.
+- Kali: `apt`, with its own installer and package availability checks.
 - Ubuntu: `apt`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
 - macOS: `brew`. Homebrew must already be installed.
 
