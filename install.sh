@@ -38,5 +38,18 @@ install_rust
 install_shared_config
 install_scm_breeze
 configure_default_shell
-log "Installation finished. To activate Zsh and Starship immediately, run: exec zsh"
-log "For new WSL sessions, restart the distribution if the previous login shell is still used."
+log "Installation finished."
+if [[ -t 0 && -t 1 ]]; then
+  printf 'Start Zsh with Starship now? [y/N] '
+  read -r answer
+  case "$answer" in
+    y|Y|yes|YES|Yes)
+      log "Starting Zsh. Type 'exit' to return to your previous shell."
+      exec zsh -l
+      ;;
+    *) log "To activate it later, run: exec zsh" ;;
+  esac
+else
+  log "Non-interactive session: skipping shell launch. Run 'exec zsh' when ready."
+fi
+log "For WSL, restart the distribution if future sessions still use the old login shell."
