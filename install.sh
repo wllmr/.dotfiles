@@ -38,4 +38,5 @@ install_rust
 install_shared_config
 install_scm_breeze
 configure_default_shell
-log "Installation finished. Restart the terminal (and WSL distro if applicable)."
+log "Installation finished. To activate Zsh and Starship immediately, run: exec zsh"
+log "For new WSL sessions, restart the distribution if the previous login shell is still used."
