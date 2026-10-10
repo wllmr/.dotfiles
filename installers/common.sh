@@ -73,8 +73,18 @@ install_scm_breeze() {
   if [[ ! -d "$HOME/.scm_breeze" ]]; then
     git clone --depth 1 https://github.com/scmbreeze/scm_breeze.git "$HOME/.scm_breeze"
   fi
-  log "Running SCM Breeze upstream installer (may prompt)"
-  bash "$HOME/.scm_breeze/install.sh"
+  log "Running SCM Breeze upstream installer without modifying managed .zshrc"
+  # Upstream appends to ${ZDOTDIR:-$HOME}/.zshrc. Redirect that write
+  # away from the symlinked configuration tracked in this repository.
+  local temp_zdotdir
+  temp_zdotdir="$(mktemp -d)"
+  if ZDOTDIR="$temp_zdotdir" bash "$HOME/.scm_breeze/install.sh"; then
+    rm -rf -- "$temp_zdotdir"
+  else
+    local status=$?
+    rm -rf -- "$temp_zdotdir"
+    return "$status"
+  fi
 }
 
 install_rust() {
