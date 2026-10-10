@@ -38,7 +38,7 @@ The entry point detects the OS and invokes the matching installer. All platforms
 - Ubuntu: `apt` for ripgrep/jq and optional fd-find; the official Go yq binary installs into `~/.local/bin`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
 - macOS: `brew` (including `yq`). Homebrew must already be installed.
 
-Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig`, `~/.vimrc`, `~/.vim/colors/oxocarbon.vim` and `~/.config/starship.toml`, backing up existing files before replacing them. It installs SCM Breeze if missing. Rust is installed through the official rustup installer and managed consistently across all four OSes; Linux installs build tools for linking. The OS script sets Zsh as the non-root user's default login shell.
+Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.vimrc`, `~/.vim/colors/oxocarbon.vim` and `~/.config/starship.toml`, backing up existing files before replacing them. Git configuration is copied once into `~/.gitconfig` rather than symlinked so `gh auth setup-git` and `git config --global` do not modify tracked repository files. An existing regular Git config is retained; a prior symlink is replaced with an independent copy preserving its effective contents. It installs SCM Breeze if missing. Rust is installed through the official rustup installer and managed consistently across all four OSes; Linux installs build tools for linking. The OS script sets Zsh as the non-root user's default login shell.
 
 The installer can be rerun without duplicating symlinks. SCM Breeze may prompt during its initial installation. Changing the default shell can request your password/sudo access.
 
