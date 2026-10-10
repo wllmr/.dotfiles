@@ -49,14 +49,18 @@ The installer can be rerun without duplicating symlinks. SCM Breeze may prompt d
 
 ## Optional developer tools
 
-After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, and Claude Code independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
+After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, Claude Code, and Node.js (nvm) independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
 
 ```bash
 ./install.sh --with-codex --with-claude
 ./install.sh --with-docker --with-codex
+./install.sh --with-node --node-version=22
+./install.sh --with-codex --node-version=24
 ```
 
-**Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is required). If npm is unavailable the installer logs a warning, rather than changing the system Node.js setup.
+**Node.js:** installed through nvm. Selecting Node or Codex prompts for the desired Node.js version (for example `22`, `24`, `22.14.0`, or `lts/*`); pressing Enter selects the latest LTS. The installed version is set as the **nvm default** for future shell sessions. When running non-interactively, use `--node-version=VERSION` (which also enables Node installation). Zsh loads nvm automatically. Selecting Codex installs Node.js first if needed.
+
+**Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is provided by the selected nvm Node.js installation).
 
 **Claude Code:** installed with Anthropic's native `https://claude.ai/install.sh` installer. This is an optional external installer; review the source before running it in a security-restricted environment.
 
@@ -104,6 +108,9 @@ docker info
 # If the optional AI tools were installed:
 codex --version
 claude --version
+node --version
+npm --version
+nvm alias default
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
