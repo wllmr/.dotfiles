@@ -15,11 +15,13 @@ link_dotfile() {
 }
 
 install_shared_config() {
-  mkdir -p "$HOME/.config" "$HOME/.local/bin"
+  mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.vim/colors"
   link_dotfile "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
   link_dotfile "$DOTFILES_DIR/.zsh_aliases" "$HOME/.zsh_aliases"
   link_dotfile "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
   link_dotfile "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"
+  link_dotfile "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
+  link_dotfile "$DOTFILES_DIR/vim/colors/oxocarbon.vim" "$HOME/.vim/colors/oxocarbon.vim"
 }
 
 install_scm_breeze() {
