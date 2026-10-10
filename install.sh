@@ -1,36 +1,51 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-has() { command -v "$1" >/dev/null 2>&1; }
-if [[ "$(uname)" == "Darwin" ]]; then
-  if ! has brew; then echo "Install Homebrew from https://brew.sh first"; exit 1; fi
-  eval "$(brew shellenv)"
-  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby
-elif [[ -f /etc/arch-release ]]; then
-  sudo pacman -Syu --needed zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting github-cli fzf starship eza bat zoxide wget git vim ruby curl
-elif [[ -f /etc/os-release ]] && grep -qiE "^(ID|ID_LIKE)=.*(ubuntu|debian)" /etc/os-release; then
-  sudo apt-get update
-  sudo apt-get install -y zsh zsh-autosuggestions zsh-syntax-highlighting gh fzf eza bat zoxide wget git vim ruby curl ca-certificates
-  if ! has starship; then
-    mkdir -p "$HOME/.local/bin"
-    tmp="$(mktemp)"
-    curl -fsSL https://starship.rs/install.sh -o "$tmp"
-    sh "$tmp" -y -b "$HOME/.local/bin"
-    rm -f "$tmp"
-  fi
-else echo "Supported: Arch, Ubuntu, macOS"; exit 1; fi
-mkdir -p "$HOME/.config" "$HOME/.local/bin"
-link_file() {
-  local src="$1" dest="$2"
-  if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then return; fi
-  if [[ -e "$dest" || -L "$dest" ]]; then mv "$dest" "$dest.backup.$(date +%Y%m%d%H%M%S)"; fi
-  ln -s "$src" "$dest"
-}
-link_file "$ROOT/.zshrc" "$HOME/.zshrc"
-link_file "$ROOT/.gitconfig" "$HOME/.gitconfig"
-link_file "$ROOT/starship.toml" "$HOME/.config/starship.toml"
-if [[ ! -f "$HOME/.scm_breeze/scm_breeze.sh" ]]; then
-  git clone --depth 1 https://github.com/scmbreeze/scm_breeze.git "$HOME/.scm_breeze"
-  bash "$HOME/.scm_breeze/install.sh"
+
+DOTFILES_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_DIR
+source "$DOTFILES_DIR/installers/common.sh"
+
+if [[ "$(id -u)" -eq 0 ]]; then
+  log "Run the installer as a regular user, not root."
+  exit 1
 fi
-echo "Done. Run: chsh -s $(command -v zsh) (if needed), then restart your terminal."
+
+case "$(uname -s)" in
+  Darwin) installer="$DOTFILES_DIR/installers/macos.sh" ;;
+  Linux)
+    if [[ -f /etc/os-release ]] && grep -Eq '^ID=kali"$DOTFILES_DIR/installers/arch.sh"
+    elif [[ -f /etc/os-release ]] && grep -Eqi '^(ID|ID_LIKE)=.*(ubuntu|debian)' /etc/os-release; then
+      installer="$DOTFILES_DIR/installers/ubuntu.sh"
+    else
+      log "Unsupported Linux distribution. Supported: Arch, Kali and Ubuntu."
+      exit 1
+    fi ;;
+  *) log "Unsupported operating system"; exit 1 ;;
+esac
+
+source "$installer"
+install_packages
+install_rust
+install_shared_config
+install_scm_breeze
+configure_default_shell
+log "Installation finished. Restart the terminal (and WSL distro if applicable)."
+ /etc/os-release; then
+      installer="$DOTFILES_DIR/installers/kali.sh"
+    elif [[ -f /etc/arch-release ]]; then
+      installer="$DOTFILES_DIR/installers/arch.sh"
+    elif [[ -f /etc/os-release ]] && grep -Eqi '^(ID|ID_LIKE)=.*(ubuntu|debian)' /etc/os-release; then
+      installer="$DOTFILES_DIR/installers/ubuntu.sh"
+    else
+      log "Unsupported Linux distribution. Supported: Arch and Ubuntu."
+      exit 1
+    fi ;;
+  *) log "Unsupported operating system"; exit 1 ;;
+esac
+
+source "$installer"
+install_packages
+install_shared_config
+install_scm_breeze
+configure_default_shell
+log "Installation finished. Restart the terminal (and WSL distro if applicable)."
