@@ -10,7 +10,7 @@ install_packages() {
       exit 1
     fi
   fi
-  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby curl
+  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby curl ripgrep fd jq yq
 }
 
 configure_default_shell() {
