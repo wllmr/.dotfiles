@@ -14,11 +14,37 @@ link_dotfile() {
   ln -s "$src" "$dst"
 }
 
+# Git writes to ~/.gitconfig (e.g. git config --global). Keep it independent
+# from the tracked template so local modifications never mutate the repository.
+install_gitconfig() {
+  local src="$DOTFILES_DIR/.gitconfig" dst="$HOME/.gitconfig"
+  if [[ -L "$dst" ]]; then
+    local backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
+    # Preserve the current effective configuration, including local edits.
+    local tmp
+    tmp="$(mktemp)"
+    if [[ -f "$dst" ]]; then
+      cp -L "$dst" "$tmp"
+    else
+      cp "$src" "$tmp"
+    fi
+    mv "$dst" "$backup"
+    mv "$tmp" "$dst"
+    chmod 600 "$dst"
+    log "Replaced Git config symlink with independent copy; saved link at $backup"
+  elif [[ ! -e "$dst" ]]; then
+    cp "$src" "$dst"
+    log "Installed Git config template into $dst"
+  else
+    log "Preserving existing Git configuration at $dst"
+  fi
+}
+
 install_shared_config() {
   mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.vim/colors"
   link_dotfile "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
   link_dotfile "$DOTFILES_DIR/.zsh_aliases" "$HOME/.zsh_aliases"
-  link_dotfile "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+  install_gitconfig
   link_dotfile "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"
   link_dotfile "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
   link_dotfile "$DOTFILES_DIR/vim/colors/oxocarbon.vim" "$HOME/.vim/colors/oxocarbon.vim"
