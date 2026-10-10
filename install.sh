@@ -1,51 +1,36 @@
-#!/bin/bash
-set -e
-
-echo "🔧 Setting up Codespaces environment..."
-
-# Install Zsh if missing
-if ! command -v zsh >/dev/null 2>&1; then
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+has() { command -v "$1" >/dev/null 2>&1; }
+if [[ "$(uname)" == "Darwin" ]]; then
+  if ! has brew; then echo "Install Homebrew from https://brew.sh first"; exit 1; fi
+  eval "$(brew shellenv)"
+  brew install zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting gh fzf starship eza bat zoxide wget git vim ruby
+elif [[ -f /etc/arch-release ]]; then
+  sudo pacman -Syu --needed zsh zsh-completions zsh-autosuggestions zsh-syntax-highlighting github-cli fzf starship eza bat zoxide wget git vim ruby curl
+elif [[ -f /etc/os-release ]] && grep -qiE "^(ID|ID_LIKE)=.*(ubuntu|debian)" /etc/os-release; then
   sudo apt-get update
-  sudo apt-get install -y zsh
+  sudo apt-get install -y zsh zsh-autosuggestions zsh-syntax-highlighting gh fzf eza bat zoxide wget git vim ruby curl ca-certificates
+  if ! has starship; then
+    mkdir -p "$HOME/.local/bin"
+    tmp="$(mktemp)"
+    curl -fsSL https://starship.rs/install.sh -o "$tmp"
+    sh "$tmp" -y -b "$HOME/.local/bin"
+    rm -f "$tmp"
+  fi
+else echo "Supported: Arch, Ubuntu, macOS"; exit 1; fi
+mkdir -p "$HOME/.config" "$HOME/.local/bin"
+link_file() {
+  local src="$1" dest="$2"
+  if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then return; fi
+  if [[ -e "$dest" || -L "$dest" ]]; then mv "$dest" "$dest.backup.$(date +%Y%m%d%H%M%S)"; fi
+  ln -s "$src" "$dest"
+}
+link_file "$ROOT/.zshrc" "$HOME/.zshrc"
+link_file "$ROOT/.gitconfig" "$HOME/.gitconfig"
+link_file "$ROOT/starship.toml" "$HOME/.config/starship.toml"
+if [[ ! -f "$HOME/.scm_breeze/scm_breeze.sh" ]]; then
+  git clone --depth 1 https://github.com/scmbreeze/scm_breeze.git "$HOME/.scm_breeze"
+  bash "$HOME/.scm_breeze/install.sh"
 fi
-
-# Install Oh My Zsh (no auto shell switch)
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  echo "⬇️ Installing Oh My Zsh..."
-  export RUNZSH=no
-  export CHSH=no
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-fi
-
-# Install Powerlevel10k theme
-if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
-  echo "✨ Installing Powerlevel10k..."
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-    "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
-fi
-
-# Install plugins
-ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
-
-if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-  git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-fi
-
-if [ ! -d "$ZSH_CUSTOM/plugins/zsh-completions" ]; then
-  git clone https://github.com/zsh-users/zsh-completions "$ZSH_CUSTOM/plugins/zsh-completions"
-fi
-
-# Symlink all dotfiles (skip install.sh and .git)
-for file in "$HOME/.dotfiles"/.*; do
-  name="$(basename "$file")"
-  case "$name" in '.'|'..'|'.git'|'install.sh') continue ;; esac
-  ln -sf "$file" "$HOME/$name"
-done
-
-# Ensure Zsh is used in interactive shells
-if ! grep -q 'exec zsh' "$HOME/.bashrc"; then
-  echo '[[ $- != *i* ]] && return' >> "$HOME/.bashrc"
-  echo 'if [ -t 1 ] && command -v zsh >/dev/null 2>&1; then exec zsh; fi' >> "$HOME/.bashrc"
-fi
-
-echo "✅ Environment is ready!"
+echo "Done. Run: chsh -s $(command -v zsh) (if needed), then restart your terminal."
