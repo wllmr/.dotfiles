@@ -37,6 +37,7 @@ source "$installer"
 INSTALL_DOCKER=0
 INSTALL_CODEX=0
 INSTALL_CLAUDE=0
+INSTALL_NODE=0
 select_optional_tools() {
   local selected
   if ! command -v fzf >/dev/null 2>&1; then
@@ -49,6 +50,7 @@ select_optional_tools() {
     'Docker (local Engine on Linux / Colima on macOS)' \
     'OpenAI Codex CLI' \
     'Claude Code CLI' \
+    'Node.js LTS (nvm)' \
     | fzf --multi --no-sort --no-info \
         --prompt='Optional tools> ' \
         --header='TAB to select/deselect | ENTER to install | ESC to skip' \
@@ -63,6 +65,9 @@ select_optional_tools() {
   case "$selected" in
     *'Claude Code CLI'*) INSTALL_CLAUDE=1 ;;
   esac
+  case "$selected" in
+    *'Node.js LTS (nvm)'*) INSTALL_NODE=1 ;;
+  esac
 }
 
 for flag in "$@"; do
@@ -71,12 +76,14 @@ for flag in "$@"; do
     --no-docker) INSTALL_DOCKER=0 ;;
     --with-codex) INSTALL_CODEX=1 ;;
     --no-codex) INSTALL_CODEX=0 ;;
+    --with-node) INSTALL_NODE=1 ;;
+    --no-node) INSTALL_NODE=0 ;;
     --with-claude) INSTALL_CLAUDE=1 ;;
     --no-claude) INSTALL_CLAUDE=0 ;;
-    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude]"; exit 2 ;;
+    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude] [--with-node|--no-node]"; exit 2 ;;
   esac
 done
-export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE
+export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_NODE
 source "$DOTFILES_DIR/installers/ai-tools.sh"
 
 install_packages
@@ -84,6 +91,7 @@ if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
   select_optional_tools
 fi
 install_optional_packages
+install_optional_node
 install_optional_ai_tools
 install_rust
 install_shared_config
