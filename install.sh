@@ -45,9 +45,9 @@ if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
   while :; do
     printf '\nOptional tools (type 1 to toggle, Enter to continue):\n'
     if [[ "$INSTALL_DOCKER" == 1 ]]; then
-      printf '  1. [x] Docker CLI / Compose\n'
+      printf '  1. [x] Docker (local engine / Colima)\n'
     else
-      printf '  1. [ ] Docker CLI / Compose\n'
+      printf '  1. [ ] Docker (local engine / Colima)\n'
     fi
     printf 'Selection: '
     IFS= read -r choice || break
