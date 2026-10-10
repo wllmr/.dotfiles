@@ -88,3 +88,26 @@ install_optional_ai_tools() {
     fi
   fi
 }
+
+# Herdr runs independently of Node.js and the AI agent CLIs.
+install_optional_herdr() {
+  [[ "${INSTALL_HERDR:-0}" == 1 ]] || return 0
+  if has herdr || [[ -x "$HOME/.local/bin/herdr" ]]; then
+    log "Herdr already installed; skipping"
+    return 0
+  fi
+  local script
+  script="$(mktemp)"
+  if ! curl --fail --silent --show-error --location https://herdr.dev/install.sh -o "$script"; then
+    rm -f "$script"
+    log "ERROR: Unable to download Herdr installer"
+    return 1
+  fi
+  if ! sh "$script"; then
+    rm -f "$script"
+    log "ERROR: Herdr installation failed"
+    return 1
+  fi
+  rm -f "$script"
+  log "Herdr installed; launch with: herdr"
+}

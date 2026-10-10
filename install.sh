@@ -37,6 +37,7 @@ source "$installer"
 INSTALL_DOCKER=0
 INSTALL_CODEX=0
 INSTALL_CLAUDE=0
+INSTALL_HERDR=0
 INSTALL_NODE=0
 NODE_VERSION='lts/*'
 INSTALL_PNPM=0
@@ -57,7 +58,7 @@ select_node_package_managers() {
 select_optional_tools() {
   local selected
   if ! command -v fzf >/dev/null 2>&1; then
-    log "WARNING: fzf unavailable; use --with-docker, --with-codex or --with-claude."
+    log "WARNING: fzf unavailable; use --with-docker, --with-codex, --with-claude or --with-herdr."
     return
   fi
   # fzf is installed by install_packages before this menu runs.
@@ -66,6 +67,7 @@ select_optional_tools() {
     'Docker (local Engine on Linux / Colima on macOS)' \
     'OpenAI Codex CLI' \
     'Claude Code CLI' \
+    'Herdr (agent terminal multiplexer)' \
     'Node.js LTS (nvm)' \
     | fzf --multi --no-sort --no-info \
         --prompt='Optional tools> ' \
@@ -80,6 +82,9 @@ select_optional_tools() {
   esac
   case "$selected" in
     *'Claude Code CLI'*) INSTALL_CLAUDE=1 ;;
+  esac
+  case "$selected" in
+    *'Herdr (agent terminal multiplexer)'*) INSTALL_HERDR=1 ;;
   esac
   case "$selected" in
     *'Node.js LTS (nvm)'*) INSTALL_NODE=1 ;;
@@ -101,16 +106,18 @@ for flag in "$@"; do
     --no-bun) INSTALL_BUN=0 ;;
     --node-version=*) NODE_VERSION="${flag#*=}"; INSTALL_NODE=1 ;;
     --no-node) INSTALL_NODE=0 ;;
+    --with-herdr) INSTALL_HERDR=1 ;;
+    --no-herdr) INSTALL_HERDR=0 ;;
     --with-claude) INSTALL_CLAUDE=1 ;;
     --no-claude) INSTALL_CLAUDE=0 ;;
-    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude] [--with-node|--no-node] [--node-version=VERSION] [--with-pnpm] [--with-yarn] [--with-bun]"; exit 2 ;;
+    *) log "Usage: ./install.sh [--with-docker|--no-docker] [--with-codex|--no-codex] [--with-claude|--no-claude] [--with-herdr|--no-herdr] [--with-node|--no-node] [--node-version=VERSION] [--with-pnpm] [--with-yarn] [--with-bun]"; exit 2 ;;
   esac
 done
 if [[ ! "$NODE_VERSION" =~ ^(lts/\*|lts/[a-zA-Z]+|node|stable|[0-9]+(\.[0-9]+){0,2})$ ]]; then
   log "Invalid Node version: $NODE_VERSION (use lts/*, 22, 22.14, or 22.14.0)"
   exit 2
 fi
-export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_NODE NODE_VERSION INSTALL_PNPM INSTALL_YARN INSTALL_BUN
+export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_HERDR INSTALL_NODE NODE_VERSION INSTALL_PNPM INSTALL_YARN INSTALL_BUN
 source "$DOTFILES_DIR/installers/ai-tools.sh"
 
 install_packages
@@ -133,6 +140,7 @@ install_optional_packages
 install_optional_node
 install_optional_node_package_managers
 install_optional_ai_tools
+install_optional_herdr
 install_rust
 install_shared_config
 configure_fd

@@ -49,11 +49,12 @@ The installer can be rerun without duplicating symlinks. SCM Breeze may prompt d
 
 ## Optional developer tools
 
-After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, Claude Code, and Node.js (nvm) independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
+After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, Claude Code, Herdr, and Node.js (nvm) independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
 
 ```bash
 ./install.sh --with-codex --with-claude
 ./install.sh --with-docker --with-codex
+./install.sh --with-herdr
 ./install.sh --with-node --node-version=22
 ./install.sh --with-codex --node-version=24
 ```
@@ -69,6 +70,8 @@ For unattended installs, use `--with-pnpm`, `--with-yarn`, or `--with-bun` (each
 ```
 
 **Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is provided by the selected nvm Node.js installation).
+
+**Herdr:** installed independently of Node.js through the official `https://herdr.dev/install.sh` installer on Linux and macOS. Select it in the interactive menu or run `./install.sh --with-herdr` (use `--no-herdr` to disable). Existing installations are skipped. Run `herdr` to launch it. Review the upstream installation script before use in a restricted environment.
 
 **Claude Code:** installed with Anthropic's native `https://claude.ai/install.sh` installer. This is an optional external installer; review the source before running it in a security-restricted environment.
 
@@ -116,6 +119,7 @@ docker info
 # If the optional AI tools were installed:
 codex --version
 claude --version
+herdr --version # if selected
 node --version
 npm --version
 nvm alias default
