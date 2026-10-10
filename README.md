@@ -1,10 +1,26 @@
-# Dotfiles — Arch Linux, Ubuntu, macOS
+# Dotfiles
 
-One portable Zsh setup with **Starship**, completions, autosuggestions, syntax highlighting, SCM Breeze, fzf, zoxide, eza, bat, GitHub CLI and wget. Existing Git author/editor/rebase settings are retained.
+Shared **Zsh + Starship** development environment for Arch Linux (including WSL2), Ubuntu (including Codespaces), and macOS.
+
+## Structure
+
+```text
+.dotfiles/
+├── install.sh                  # OS detection and orchestration
+├── installers/
+│   ├── arch.sh                 # pacman + Linux default shell
+│   ├── ubuntu.sh               # apt + Starship fallback + default shell
+│   ├── macos.sh                # Homebrew + macOS default shell
+│   └── common.sh               # backups, symlinks, SCM Breeze
+├── .zshrc                      # shared Zsh configuration
+├── .zsh_aliases                # eza and bat convenience aliases
+├── .gitconfig                  # shared Git identity and behavior
+└── starship.toml               # shared prompt
+```
 
 ## Install
 
-Install Git on your system and Homebrew on macOS (https://brew.sh), then:
+Install Git first, plus Homebrew on macOS (https://brew.sh). Then:
 
 ```bash
 git clone https://github.com/wllmr/.dotfiles.git ~/.dotfiles
@@ -12,16 +28,19 @@ cd ~/.dotfiles
 bash install.sh
 ```
 
-The installer uses `pacman` on Arch, `apt` on Ubuntu and `brew` on macOS. It installs Zsh, completions, autosuggestions, syntax highlighting, `gh`, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby and curl. On Ubuntu, unavailable optional packages are reported and skipped; availability depends on the Ubuntu version and enabled repositories. Starship is installed from its official script if missing.
+The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby and curl where available.
 
-The installer backs up existing files before symlinking `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig`, and `~/.config/starship.toml`. It sets Zsh as the non-root user's login shell using `usermod` (Linux) or `chsh` (macOS). It may prompt for sudo/password. The SCM Breeze upstream installer may prompt. Rerunning the installer is safe.
+- Arch: `pacman`.
+- Ubuntu: `apt`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
+- macOS: `brew`. Homebrew must already be installed.
 
-Restart your terminal afterwards; with WSL, terminate the distribution from Windows PowerShell to start a fresh session.
+Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig` and `~/.config/starship.toml`, backing up existing files before replacing them. It installs SCM Breeze if missing. The OS script sets Zsh as the non-root user's default login shell.
 
-## Check installation
+The installer can be rerun without duplicating symlinks. SCM Breeze may prompt during its initial installation. Changing the default shell can request your password/sudo access.
 
-```sh
-getent passwd "$USER" | cut -d: -f7  # Linux only; on macOS use: echo "$SHELL"
+## Verify
+
+```bash
 zsh --version
 starship --version
 gh --version
@@ -29,13 +48,13 @@ fzf --version
 wget --version
 ```
 
-Authenticate GitHub CLI using `gh auth login`. Authentication, SSH keys, and credentials are not committed.
+Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
 
-Starship is the **only** prompt; Powerlevel10k and Oh My Zsh are not required. For glyphs, set a Nerd Font in Windows Terminal or your macOS terminal.
+For WSL, terminate and reopen your distribution from Windows PowerShell after installation. For terminal glyphs, use a Nerd Font in your terminal settings.
 
-## Updating
+## Update
 
-```sh
+```bash
 cd ~/.dotfiles
 git pull --ff-only
 bash install.sh
