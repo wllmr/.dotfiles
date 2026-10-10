@@ -60,6 +60,14 @@ After base packages are installed, an `fzf` multi-select menu lets you select Do
 
 **Node.js:** installed through nvm. Selecting Node or Codex prompts for the desired Node.js version (for example `22`, `24`, `22.14.0`, or `lts/*`); pressing Enter selects the latest LTS. The installed version is set as the **nvm default** for future shell sessions. When running non-interactively, use `--node-version=VERSION` (which also enables Node installation). Zsh loads nvm automatically. Selecting Codex installs Node.js first if needed.
 
+**Package managers:** npm comes with Node.js automatically. After selecting a Node version, a second fzf multi-select lets you additionally install **pnpm**, **Yarn**, and/or **Bun**. You can choose more than one. pnpm and Yarn use Corepack (installed separately if Node does not bundle it), allowing projects to pin their package manager versions. Bun is installed using the supported npm package into the chosen nvm Node installation.
+
+For unattended installs, use `--with-pnpm`, `--with-yarn`, or `--with-bun` (each also selects Node.js). For example:
+
+```bash
+./install.sh --node-version=24 --with-pnpm --with-yarn
+```
+
 **Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is provided by the selected nvm Node.js installation).
 
 **Claude Code:** installed with Anthropic's native `https://claude.ai/install.sh` installer. This is an optional external installer; review the source before running it in a security-restricted environment.
@@ -111,6 +119,9 @@ claude --version
 node --version
 npm --version
 nvm alias default
+pnpm --version # if selected
+yarn --version # if selected
+bun --version # if selected
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
