@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 install_packages() {
   sudo apt-get update
-  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y zsh zsh-autosuggestions zsh-syntax-highlighting git curl wget vim ruby ca-certificates fzf build-essential
-  for pkg in gh eza bat zoxide zsh-completions; do
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y zsh zsh-autosuggestions zsh-syntax-highlighting git curl wget vim ruby ca-certificates fzf build-essential ripgrep jq
+  for pkg in gh eza bat zoxide zsh-completions fd-find; do
     if apt-cache show "$pkg" >/dev/null 2>&1; then
       sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"
     else
       log "WARNING: $pkg unavailable in configured apt repositories."
     fi
   done
+  install_go_yq_binary
   if ! has starship; then
     mkdir -p "$HOME/.local/bin"
     local tmp
