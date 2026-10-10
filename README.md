@@ -31,12 +31,12 @@ cd ~/.dotfiles
 bash install.sh
 ```
 
-The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, wget, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
+The entry point detects the OS and invokes the matching installer. All platforms receive Zsh, zsh-completions, autosuggestions, syntax highlighting, GitHub CLI, SCM Breeze, fzf, Starship, eza, bat, zoxide, ripgrep, fd, jq, Mike Farah's yq v4, wget, Git, Vim, Ruby, curl, plus Rust (rustup, Cargo and stable rustc) where available.
 
-- Arch: `pacman`.
-- Kali: `apt`, with its own installer and package availability checks.
-- Ubuntu: `apt`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
-- macOS: `brew`. Homebrew must already be installed.
+- Arch: `pacman` (`go-yq` supplies Mike Farah's yq).
+- Kali: `apt` for ripgrep/jq and optional fd-find; the official Go yq binary installs into `~/.local/bin`.
+- Ubuntu: `apt` for ripgrep/jq and optional fd-find; the official Go yq binary installs into `~/.local/bin`. Optional tools unavailable in the configured repositories produce warnings. Starship uses the official installer as a fallback.
+- macOS: `brew` (including `yq`). Homebrew must already be installed.
 
 Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.gitconfig`, `~/.vimrc`, `~/.vim/colors/oxocarbon.vim` and `~/.config/starship.toml`, backing up existing files before replacing them. It installs SCM Breeze if missing. Rust is installed through the official rustup installer and managed consistently across all four OSes; Linux installs build tools for linking. The OS script sets Zsh as the non-root user's default login shell.
 
@@ -45,6 +45,10 @@ The installer can be rerun without duplicating symlinks. SCM Breeze may prompt d
 ## Vim theme
 
 The Oxocarbon reference theme targets Neovim only. This repository includes a native Vim colorscheme based on the official [Oxocarbon Base16 dark palette](https://github.com/nyoom-engineering/base16-oxocarbon), so the existing `vim` command works without Neovim or a plugin manager. Open Vim and run `:colorscheme` to verify `oxocarbon` is active. This is a Vim-compatible adaptation, not the original Neovim renderer.
+
+## CLI tools
+
+`rg` searches files, `fd` finds files, `jq` processes JSON, and `yq` v4 processes YAML. On Ubuntu/Kali, the `fd-find` executable is often named `fdfind`; shared setup links `~/.local/bin/fd` to that executable. The Go-based `yq` is used consistently instead of the differently implemented Debian `yq` package. If optional packages are unavailable, installation logs a warning.
 
 ## Verify
 
@@ -56,6 +60,10 @@ fzf --version
 wget --version
 rustc --version
 cargo --version
+rg --version
+fd --version
+jq --version
+yq --version
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
