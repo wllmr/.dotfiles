@@ -1,5 +1,8 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# Preserve the default left prompt; show timing information on the right.
+right_format = "$cmd_duration$time"
+
 [aws]
 symbol = " "
 
@@ -312,3 +315,15 @@ symbol = " "
 
 [zig]
 symbol = " "
+
+[cmd_duration]
+min_time = 1000
+show_milliseconds = false
+format = "[󰔛 took $duration]($style) "
+style = "bold yellow"
+
+[time]
+disabled = false
+time_format = "%H:%M:%S"
+format = "[ $time]($style)"
+style = "dimmed white"
