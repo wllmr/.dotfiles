@@ -1,23 +1,34 @@
-# Enable Powerlevel10k theme
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-source ~/.powerlevel10k/powerlevel10k.zsh-theme
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# Powerlevel10k instant prompt must load before other shell initialization.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
 export EDITOR=vim
-export LANG=sv_SE.UTF-8
-export LC_ALL=sv_SE.UTF-8
-source $HOME/.zsh_aliases
 
-# Oh My Zsh configuration
-export ZSH="/Users/williamrosander/.oh-my-zsh"
+# Avoid forcing a locale that may not be generated on the current machine.
+export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git zsh-autosuggestions zsh-completions)
-source $ZSH/oh-my-zsh.sh
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+  source "$ZSH/oh-my-zsh.sh"
+elif [[ -f "$HOME/.powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+  # Standalone installation when Oh My Zsh isn't installed.
+  source "$HOME/.powerlevel10k/powerlevel10k.zsh-theme"
+fi
+
+# fzf's modern shell integration (Ctrl+R, Ctrl+T, Alt+C).
+if (( $+commands[fzf] )); then
+  if fzf --help 2>/dev/null | grep -q -- '--zsh'; then
+    source <(fzf --zsh)
+  elif [[ -f /usr/share/fzf/key-bindings.zsh ]]; then
+    source /usr/share/fzf/key-bindings.zsh
+    [[ -f /usr/share/fzf/completion.zsh ]] && source /usr/share/fzf/completion.zsh
+  fi
+fi
+
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
+[[ -f "$HOME/.zsh_aliases" ]] && source "$HOME/.zsh_aliases"
+
+# Load user-customized Powerlevel10k configuration last.
+[[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
