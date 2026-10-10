@@ -49,3 +49,37 @@ install_rust() {
 }
 
 # Platform-specific implementations supply configure_default_shell().
+
+# Debian/Ubuntu name fd's binary fdfind. Provide a consistent fd command.
+configure_fd() {
+  if ! has fd && has fdfind; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sfn "$(command -v fdfind)" "$HOME/.local/bin/fd"
+  fi
+}
+
+# Use Mike Farah's Go-based yq v4 on Debian-based distributions.
+# apt's 'yq' can be the unrelated Python wrapper.
+install_go_yq_binary() {
+  if has yq && yq --version 2>/dev/null | grep -qi 'mikefarah'; then
+    return
+  fi
+  local architecture artifact tmp
+  case "$(uname -m)" in
+    x86_64|amd64) architecture=amd64 ;;
+    aarch64|arm64) architecture=arm64 ;;
+    armv7l) architecture=arm ;;
+    i386|i686) architecture=386 ;;
+    *) log "WARNING: unsupported architecture for yq: $(uname -m)"; return 0 ;;
+  esac
+  artifact="yq_linux_${architecture}"
+  mkdir -p "$HOME/.local/bin"
+  tmp="$(mktemp)"
+  if curl --fail --location --silent --show-error "https://github.com/mikefarah/yq/releases/latest/download/$artifact" -o "$tmp"; then
+    chmod 755 "$tmp"
+    mv "$tmp" "$HOME/.local/bin/yq"
+  else
+    rm -f "$tmp"
+    log "WARNING: Failed to download Go yq. Install it manually."
+  fi
+}
