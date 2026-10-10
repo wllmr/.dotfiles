@@ -2,7 +2,7 @@
 install_packages() {
   sudo apt-get update
   sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y zsh zsh-autosuggestions zsh-syntax-highlighting git curl wget vim ruby ca-certificates fzf build-essential ripgrep jq
-  for pkg in gh eza bat zoxide zsh-completions fd-find; do
+  for pkg in gh eza bat zoxide zsh-completions fd-find docker.io docker-compose-v2; do
     if apt-cache show "$pkg" >/dev/null 2>&1; then
       sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"
     else
