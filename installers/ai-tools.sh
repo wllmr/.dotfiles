@@ -23,10 +23,13 @@ install_optional_node() {
   # nvm is a shell function: loading it here exposes node/npm immediately.
   # shellcheck disable=SC1091
   source "$NVM_DIR/nvm.sh"
-  nvm install --lts
-  nvm alias default 'lts/*'
+  nvm install "$NODE_VERSION"
+  # Pin the actual installed version as the default for future shells.
+  local installed_version
+  installed_version="$(node --version)"
+  nvm alias default "$installed_version"
   nvm use default
-  log "Node.js LTS: $(node --version); npm: $(npm --version)"
+  log "Node.js default: $(node --version); npm: $(npm --version)"
 }
 
 install_optional_ai_tools() {
