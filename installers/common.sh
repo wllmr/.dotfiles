@@ -40,13 +40,31 @@ install_gitconfig() {
   fi
 }
 
+# Git tools modify ~/.gitconfig: preserve a writable home copy, not a repo symlink.
+install_gitconfig() {
+  local src="$DOTFILES_DIR/git/.gitconfig" dst="$HOME/.gitconfig"
+  if [[ -L "$dst" ]]; then
+    local tmp backup
+    tmp="$(mktemp)"
+    if [[ -f "$dst" ]]; then cp -L "$dst" "$tmp"; else cp "$src" "$tmp"; fi
+    backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
+    mv "$dst" "$backup"
+    mv "$tmp" "$dst"
+    log "Migrated ~/.gitconfig symlink to a separate file; backed up link to $backup"
+  elif [[ ! -e "$dst" ]]; then
+    cp "$src" "$dst"
+  else
+    log "Preserving existing ~/.gitconfig"
+  fi
+}
+
 install_shared_config() {
   mkdir -p "$HOME/.config" "$HOME/.local/bin" "$HOME/.vim/colors"
-  link_dotfile "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-  link_dotfile "$DOTFILES_DIR/.zsh_aliases" "$HOME/.zsh_aliases"
+  link_dotfile "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+  link_dotfile "$DOTFILES_DIR/zsh/.zsh_aliases" "$HOME/.zsh_aliases"
   install_gitconfig
-  link_dotfile "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"
-  link_dotfile "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
+  link_dotfile "$DOTFILES_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
+  link_dotfile "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
   link_dotfile "$DOTFILES_DIR/vim/colors/oxocarbon.vim" "$HOME/.vim/colors/oxocarbon.vim"
 }
 

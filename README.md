@@ -6,19 +6,24 @@ Shared **Zsh + Starship** development environment for Arch Linux (including WSL2
 
 ```text
 .dotfiles/
-├── install.sh                  # OS detection and orchestration
+├── install.sh
 ├── installers/
-│   ├── arch.sh                 # pacman + Linux default shell
-│   ├── kali.sh                 # Kali packages + default shell
-│   ├── ubuntu.sh               # apt + Starship fallback + default shell
-│   ├── macos.sh                # Homebrew + macOS default shell
-│   └── common.sh               # backups, symlinks, SCM Breeze
-├── .zshrc                      # shared Zsh configuration
-├── .zsh_aliases                # eza and bat convenience aliases
-├── .vimrc                      # Vim defaults + Oxocarbon colorscheme
-├── vim/colors/oxocarbon.vim    # native Vim theme using official Base16 palette
-├── .gitconfig                  # shared Git identity and behavior
-└── starship.toml               # shared prompt
+│   ├── arch.sh
+│   ├── ubuntu.sh
+│   ├── kali.sh
+│   ├── macos.sh
+│   ├── ai-tools.sh
+│   └── common.sh
+├── zsh/
+│   ├── .zshrc
+│   └── .zsh_aliases
+├── git/
+│   └── .gitconfig
+├── vim/
+│   ├── .vimrc
+│   └── colors/oxocarbon.vim
+└── starship/
+    └── starship.toml
 ```
 
 ## Install
@@ -42,6 +47,21 @@ Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.vimrc`, `~/.vim/colors/o
 
 The installer can be rerun without duplicating symlinks. SCM Breeze may prompt during its initial installation. Changing the default shell can request your password/sudo access.
 
+## Optional developer tools
+
+After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, and Claude Code independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
+
+```bash
+./install.sh --with-codex --with-claude
+./install.sh --with-docker --with-codex
+```
+
+**Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is required). If npm is unavailable the installer logs a warning, rather than changing the system Node.js setup.
+
+**Claude Code:** installed with Anthropic's native `https://claude.ai/install.sh` installer. This is an optional external installer; review the source before running it in a security-restricted environment.
+
+Neither installation stores credentials in this repository. Authenticate manually by running `codex` or `claude` after installation.
+
 ## Vim theme
 
 The Oxocarbon reference theme targets Neovim only. This repository includes a native Vim colorscheme based on the official [Oxocarbon Base16 dark palette](https://github.com/nyoom-engineering/base16-oxocarbon), so the existing `vim` command works without Neovim or a plugin manager. Open Vim and run `:colorscheme` to verify `oxocarbon` is active. This is a Vim-compatible adaptation, not the original Neovim renderer.
@@ -52,7 +72,7 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 ## Optional Docker (no Docker Desktop)
 
-Run `./install.sh` interactively and toggle Docker, or specify `./install.sh --with-docker`. Docker is off by default for non-interactive installs (or use `--no-docker`).
+Run `./install.sh` interactively and select Docker in the `fzf` menu, or specify `./install.sh --with-docker`. Docker is off by default for non-interactive installs (or use `--no-docker`).
 
 - **Arch Linux / native Linux**: installs `docker` and Compose packages. The local daemon is not automatically enabled or started. On a systemd installation, use `sudo systemctl enable --now docker` when you want to enable it.
 - **Ubuntu / Kali**: installs `docker.io` and `docker-compose-v2` when available in configured apt repositories. On native Linux with systemd, use `sudo systemctl enable --now docker` if the daemon is not running.
@@ -81,6 +101,9 @@ yq --version
 docker --version
 docker compose version
 docker info
+# If the optional AI tools were installed:
+codex --version
+claude --version
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
