@@ -15,7 +15,8 @@ install_packages() {
 
 install_optional_packages() {
   if [[ "$INSTALL_DOCKER" == 1 ]]; then
-    brew install docker docker-compose
+    brew install docker docker-compose colima
+    log "Colima installed. Start the Docker-compatible engine with: colima start"
   fi
 }
 
