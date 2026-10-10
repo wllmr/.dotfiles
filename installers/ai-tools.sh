@@ -32,6 +32,31 @@ install_optional_node() {
   log "Node.js default: $(node --version); npm: $(npm --version)"
 }
 
+
+# npm ships with Node. pnpm/Yarn use Corepack for per-project versions.
+install_optional_node_package_managers() {
+  if [[ "$INSTALL_PNPM" == 1 || "$INSTALL_YARN" == 1 ]]; then
+    if ! command -v corepack >/dev/null 2>&1; then
+      npm install --global corepack
+    fi
+    corepack enable
+    if [[ "$INSTALL_PNPM" == 1 ]]; then
+      corepack install --global pnpm@latest
+      log "pnpm: $(pnpm --version)"
+    fi
+    if [[ "$INSTALL_YARN" == 1 ]]; then
+      corepack install --global yarn@stable
+      log "Yarn: $(yarn --version)"
+    fi
+  fi
+  if [[ "$INSTALL_BUN" == 1 ]]; then
+    if ! command -v bun >/dev/null 2>&1; then
+      npm install --global bun
+    fi
+    log "Bun: $(bun --version)"
+  fi
+}
+
 install_optional_ai_tools() {
   if [[ "$INSTALL_CODEX" == 1 ]]; then
     if has codex || [[ -x "$HOME/.local/bin/codex" ]]; then
