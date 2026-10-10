@@ -31,4 +31,19 @@ install_scm_breeze() {
   bash "$HOME/.scm_breeze/install.sh"
 }
 
+install_rust() {
+  if ! command -v rustup >/dev/null 2>&1 && [[ ! -x "$HOME/.cargo/bin/rustup" ]]; then
+    log "Installing Rust via official rustup installer"
+    local tmp
+    tmp="$(mktemp)"
+    curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o "$tmp"
+    sh "$tmp" -y --profile minimal --no-modify-path
+    rm -f "$tmp"
+  fi
+  local rustup_cmd
+  rustup_cmd="$(command -v rustup 2>/dev/null || true)"
+  [[ -n "$rustup_cmd" ]] || rustup_cmd="$HOME/.cargo/bin/rustup"
+  "$rustup_cmd" default stable
+}
+
 # Platform-specific implementations supply configure_default_shell().
