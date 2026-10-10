@@ -6,19 +6,24 @@ Shared **Zsh + Starship** development environment for Arch Linux (including WSL2
 
 ```text
 .dotfiles/
-├── install.sh                  # OS detection and orchestration
+├── install.sh
 ├── installers/
-│   ├── arch.sh                 # pacman + Linux default shell
-│   ├── kali.sh                 # Kali packages + default shell
-│   ├── ubuntu.sh               # apt + Starship fallback + default shell
-│   ├── macos.sh                # Homebrew + macOS default shell
-│   └── common.sh               # backups, symlinks, SCM Breeze
-├── .zshrc                      # shared Zsh configuration
-├── .zsh_aliases                # eza and bat convenience aliases
-├── .vimrc                      # Vim defaults + Oxocarbon colorscheme
-├── vim/colors/oxocarbon.vim    # native Vim theme using official Base16 palette
-├── .gitconfig                  # shared Git identity and behavior
-└── starship.toml               # shared prompt
+│   ├── arch.sh
+│   ├── ubuntu.sh
+│   ├── kali.sh
+│   ├── macos.sh
+│   ├── ai-tools.sh
+│   └── common.sh
+├── zsh/
+│   ├── .zshrc
+│   └── .zsh_aliases
+├── git/
+│   └── .gitconfig
+├── vim/
+│   ├── .vimrc
+│   └── colors/oxocarbon.vim
+└── starship/
+    └── starship.toml
 ```
 
 ## Install
@@ -41,6 +46,21 @@ The entry point detects the OS and invokes the matching installer. All platforms
 Common setup symlinks `~/.zshrc`, `~/.zsh_aliases`, `~/.vimrc`, `~/.vim/colors/oxocarbon.vim` and `~/.config/starship.toml`, backing up existing files before replacing them. Git configuration is copied once into `~/.gitconfig` rather than symlinked so `gh auth setup-git` and `git config --global` do not modify tracked repository files. An existing regular Git config is retained; a prior symlink is replaced with an independent copy preserving its effective contents. It installs SCM Breeze if missing. Rust is installed through the official rustup installer and managed consistently across all four OSes; Linux installs build tools for linking. The OS script sets Zsh as the non-root user's default login shell.
 
 The installer can be rerun without duplicating symlinks. SCM Breeze may prompt during its initial installation. Changing the default shell can request your password/sudo access.
+
+## Optional developer tools
+
+Use the interactive installer menu to toggle Docker, Codex CLI, and Claude Code independently. None are installed by default in non-interactive sessions.
+
+```bash
+./install.sh --with-codex --with-claude
+./install.sh --with-docker --with-codex
+```
+
+**Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is required). If npm is unavailable the installer logs a warning, rather than changing the system Node.js setup.
+
+**Claude Code:** installed with Anthropic's native `https://claude.ai/install.sh` installer. This is an optional external installer; review the source before running it in a security-restricted environment.
+
+Neither installation stores credentials in this repository. Authenticate manually by running `codex` or `claude` after installation.
 
 ## Vim theme
 
@@ -81,6 +101,9 @@ yq --version
 docker --version
 docker compose version
 docker info
+# If the optional AI tools were installed:
+codex --version
+claude --version
 ```
 
 Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
