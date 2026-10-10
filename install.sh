@@ -33,7 +33,35 @@ case "$(uname -s)" in
 esac
 
 source "$installer"
+# Optional packages are selected before any installation begins.
+# Non-interactive installs default to no optional packages.
+INSTALL_DOCKER=0
+case "${1:-}" in
+  --with-docker) INSTALL_DOCKER=1 ;;
+  --no-docker|"") ;;
+  *) log "Usage: ./install.sh [--with-docker|--no-docker]"; exit 2 ;;
+esac
+if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
+  while :; do
+    printf '\nOptional tools (type 1 to toggle, Enter to continue):\n'
+    if [[ "$INSTALL_DOCKER" == 1 ]]; then
+      printf '  1. [x] Docker CLI / Compose\n'
+    else
+      printf '  1. [ ] Docker CLI / Compose\n'
+    fi
+    printf 'Selection: '
+    IFS= read -r choice || break
+    case "$choice" in
+      1) INSTALL_DOCKER=$((1 - INSTALL_DOCKER)) ;;
+      "") break ;;
+      *) printf 'Invalid selection.\n' ;;
+    esac
+  done
+fi
+export INSTALL_DOCKER
+
 install_packages
+install_optional_packages
 install_rust
 install_shared_config
 configure_fd
