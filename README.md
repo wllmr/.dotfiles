@@ -49,7 +49,7 @@ The installer can be rerun without duplicating symlinks. SCM Breeze may prompt d
 
 ## Optional developer tools
 
-Use the interactive installer menu to toggle Docker, Codex CLI, and Claude Code independently. None are installed by default in non-interactive sessions.
+After base packages are installed, an `fzf` multi-select menu lets you select Docker, Codex CLI, and Claude Code independently with **Tab** and confirm with **Enter** (or **Esc** to skip). None are installed by default in non-interactive sessions.
 
 ```bash
 ./install.sh --with-codex --with-claude
@@ -72,7 +72,7 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 ## Optional Docker (no Docker Desktop)
 
-Run `./install.sh` interactively and toggle Docker, or specify `./install.sh --with-docker`. Docker is off by default for non-interactive installs (or use `--no-docker`).
+Run `./install.sh` interactively and select Docker in the `fzf` menu, or specify `./install.sh --with-docker`. Docker is off by default for non-interactive installs (or use `--no-docker`).
 
 - **Arch Linux / native Linux**: installs `docker` and Compose packages. The local daemon is not automatically enabled or started. On a systemd installation, use `sudo systemctl enable --now docker` when you want to enable it.
 - **Ubuntu / Kali**: installs `docker.io` and `docker-compose-v2` when available in configured apt repositories. On native Linux with systemd, use `sudo systemctl enable --now docker` if the daemon is not running.
