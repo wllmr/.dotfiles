@@ -2,6 +2,8 @@
 
 Shared **Zsh + Starship** development environment for Arch Linux (including WSL2), Ubuntu (including Codespaces), Kali Linux, and macOS.
 
+Zsh uses Swedish regional formats (`sv_SE.UTF-8`) and English command messages (`LC_MESSAGES=C`). An inherited `LC_ALL` is cleared so it cannot override these choices. The Swedish UTF-8 locale must be available on the system; check with `locale -a`. Keyboard layout is configured separately in the operating system.
+
 ## Structure
 
 ```text
