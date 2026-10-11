@@ -7,37 +7,12 @@ link_dotfile() {
   local src="$1" dst="$2"
   if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then return; fi
   if [[ -e "$dst" || -L "$dst" ]]; then
-    local backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
+    local backup
+    backup="$(mktemp -d "$dst.backup.XXXXXXXX")/original"
     mv "$dst" "$backup"
     log "Backed up $dst to $backup"
   fi
   ln -s "$src" "$dst"
-}
-
-# Git writes to ~/.gitconfig (e.g. git config --global). Keep it independent
-# from the tracked template so local modifications never mutate the repository.
-install_gitconfig() {
-  local src="$DOTFILES_DIR/.gitconfig" dst="$HOME/.gitconfig"
-  if [[ -L "$dst" ]]; then
-    local backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
-    # Preserve the current effective configuration, including local edits.
-    local tmp
-    tmp="$(mktemp)"
-    if [[ -f "$dst" ]]; then
-      cp -L "$dst" "$tmp"
-    else
-      cp "$src" "$tmp"
-    fi
-    mv "$dst" "$backup"
-    mv "$tmp" "$dst"
-    chmod 600 "$dst"
-    log "Replaced Git config symlink with independent copy; saved link at $backup"
-  elif [[ ! -e "$dst" ]]; then
-    cp "$src" "$dst"
-    log "Installed Git config template into $dst"
-  else
-    log "Preserving existing Git configuration at $dst"
-  fi
 }
 
 # Git tools modify ~/.gitconfig: preserve a writable home copy, not a repo symlink.
@@ -47,7 +22,7 @@ install_gitconfig() {
     local tmp backup
     tmp="$(mktemp)"
     if [[ -f "$dst" ]]; then cp -L "$dst" "$tmp"; else cp "$src" "$tmp"; fi
-    backup="$dst.backup.$(date +%Y%m%d%H%M%S)"
+    backup="$(mktemp -d "$dst.backup.XXXXXXXX")/original"
     mv "$dst" "$backup"
     mv "$tmp" "$dst"
     log "Migrated ~/.gitconfig symlink to a separate file; backed up link to $backup"
@@ -73,19 +48,28 @@ install_shared_config() {
 install_git_shortcuts() {
   local base="${1:-$HOME/.local/share/dotfiles/oh-my-zsh}"
   local revision=60c9a7a839b790cd905d0fd4419435124fd1bdc0
-  local target="$base/$revision" staging file
-  if [[ ! -d "$target" ]]; then
+  local target="$base/$revision" staging file complete=1
+  for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
+    [[ -s "$target/$file" ]] || complete=0
+  done
+  if [[ "$complete" == 0 ]]; then
     mkdir -p "$base"
     staging="$(mktemp -d "$base/.download.XXXXXXXX")"
     for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
       mkdir -p "$staging/$(dirname "$file")"
       if ! curl --fail --silent --show-error --location \
-        "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/$revision/$file" -o "$staging/$file"; then
+        "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/$revision/$file" -o "$staging/$file" || [[ ! -s "$staging/$file" ]]; then
         rm -rf -- "$staging"
         log "ERROR: Unable to download the shared Git plugin"
         return 1
       fi
     done
+    if [[ -e "$target" || -L "$target" ]]; then
+      local backup
+      backup="$(mktemp -d "$base/.incomplete.XXXXXXXX")"
+      mv "$target" "$backup/$revision"
+      log "Preserved incomplete Git plugin in $backup"
+    fi
     mv "$staging" "$target"
   fi
   link_dotfile "$target" "$base/current"
@@ -96,6 +80,13 @@ configure_scm_breeze_config() {
   local target="$config_dir/.git.scmbrc" personal="$config_dir/.git.scmbrc.local"
   local source_config="$DOTFILES_DIR/zsh/.git.scmbrc"
   if [[ -L "$target" && "$(readlink "$target")" == "$source_config" ]]; then return; fi
+  # A managed wrapper from another checkout is not personal configuration.
+  # This existing header also identifies wrappers installed before this check.
+  if [[ -L "$target" && -f "$target" ]] &&
+    [[ "$(head -n 1 "$target")" == '# Keep upstream defaults and existing personal SCM Breeze preferences.' ]]; then
+    link_dotfile "$source_config" "$target"
+    return
+  fi
   if [[ -f "$target" ]]; then
     if [[ -e "$personal" || -L "$personal" ]]; then
       log "ERROR: Both $target and $personal exist; reconcile them before rerunning."
@@ -147,7 +138,16 @@ install_rust() {
   "$rustup_cmd" default stable
 }
 
-# Platform-specific implementations supply configure_default_shell().
+# Shared Linux implementation; macOS supplies its own account lookup.
+configure_default_shell() {
+  local desired current
+  desired="$(command -v zsh)"
+  current="$(getent passwd "$(id -un)" | cut -d: -f7)"
+  if [[ "$current" != "$desired" ]]; then
+    sudo usermod --shell "$desired" "$(id -un)"
+    log "Set default shell to $desired"
+  fi
+}
 
 # Debian/Ubuntu name fd's binary fdfind. Provide a consistent fd command.
 configure_fd() {

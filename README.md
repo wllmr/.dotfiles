@@ -15,6 +15,8 @@ Zsh uses Swedish regional formats (`sv_SE.UTF-8`) and English command messages (
 │   ├── kali.sh
 │   ├── macos.sh
 │   ├── ai-tools.sh
+│   ├── options.sh
+│   ├── debian.sh
 │   └── common.sh
 ├── zsh/
 │   ├── .zshrc
@@ -72,6 +74,8 @@ For unattended installs, use `--with-pnpm`, `--with-yarn`, or `--with-bun` (each
 ./install.sh --node-version=24 --with-pnpm --with-yarn
 ```
 
+Flags are processed in order. `--no-node` clears previously selected pnpm, Yarn and Bun; a later `--with-pnpm`, `--with-yarn` or `--with-bun` enables Node again. Codex always requires Node, even with `--no-node`.
+
 **Codex:** installed into the user-local `~/.local` npm prefix from `@openai/codex` (npm is provided by the selected nvm Node.js installation).
 
 **Herdr:** installed independently of Node.js through the official `https://herdr.dev/install.sh` installer on Linux and macOS. Select it in the interactive menu or run `./install.sh --with-herdr` (use `--no-herdr` to disable). Existing installations are skipped. Run `herdr` to launch it. Review the upstream installation script before use in a restricted environment.
@@ -106,6 +110,16 @@ The installer does **not** add your account to the `docker` group or automatical
 `wget` is always installed on all four platforms.
 
 ## Verify
+
+Run regression checks without installing packages or changing personal configuration:
+
+```bash
+bash tests/setup.sh
+zsh -f tests/shell.zsh
+bash tests/git-tools.sh
+```
+
+The Git integration test downloads the pinned plugin files. It checks SCM Breeze aliases when SCM Breeze is installed; otherwise that part reports a skip. Linux package-manager calls are simulated in the offline tests; a full Linux installation still needs verification on Linux.
 
 ```bash
 zsh --version
