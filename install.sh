@@ -119,8 +119,10 @@ install_optional_herdr
 install_rust
 install_shared_config
 configure_fd
-install_git_shortcuts
 install_scm_breeze
+repository_prompt=0
+if [[ -t 0 && -t 1 ]]; then repository_prompt=1; fi
+configure_scm_repository_index "$repository_prompt"
 configure_default_shell
 log "Installation finished."
 if [[ -t 0 && -t 1 ]]; then

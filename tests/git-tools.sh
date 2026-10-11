@@ -37,9 +37,6 @@ fi
 [[ "$(< "$test_dir/conflict/.git.scmbrc")" == 'old config' ]]
 [[ "$(< "$test_dir/conflict/.git.scmbrc.local")" == 'local config' ]]
 
-# The pinned upstream files are needed for an integration check.
-install_git_shortcuts "$test_dir/plugin"
-install_git_shortcuts "$test_dir/plugin"
 git init -q -b shortcut-check "$test_dir/repo"
-zsh -f "$DOTFILES_DIR/tests/git-tools.zsh" "$test_dir/plugin/current" "$test_dir/repo"
-printf 'PASS: Git plugin installation, SCM config migration/recovery and Git shortcuts\n'
+zsh -f "$DOTFILES_DIR/tests/git-tools.zsh" "$test_dir/repo"
+printf 'PASS: SCM config migration/recovery and Git shortcuts\n'

@@ -1,4 +1,10 @@
 # Optional enhancements for installed CLI tools.
+# The sole custom Git shortcut: push this branch and establish its upstream.
+unalias gpsup 2>/dev/null || true
+gpsup() {
+  git push --set-upstream origin HEAD "$@"
+}
+
 if (( $+commands[eza] )); then
   alias ls='eza --icons=auto'
   alias ll='eza -lah --git --icons=auto'

@@ -6,12 +6,17 @@ test_dir=$(mktemp -d)
 trap 'rm -rf -- "$test_dir"' EXIT
 export HOME="$test_dir/home"
 mkdir -p "$HOME" "$test_dir/brew/share/zsh-completions"
+ln -s "$repo_dir/zsh/.zsh_aliases" "$HOME/.zsh_aliases"
+alias gpsup='legacy-upstream-shortcut'
+setopt complete_aliases
 print '#compdef review-command' > "$test_dir/brew/share/zsh-completions/_review_command"
 plugin_dir="$HOME/.local/share/dotfiles/oh-my-zsh/current"
 mkdir -p "$plugin_dir/lib" "$plugin_dir/plugins/git"
 for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
   print '# fixture' > "$plugin_dir/$file"
 done
+# Simulate a previous installation: none of its aliases should be loaded.
+print "alias gp='legacy-plugin-loaded'" > "$plugin_dir/plugins/git/git.plugin.zsh"
 # Replace external integration generators, not the startup logic under test.
 brew() { [[ $1 == --prefix ]] && print -r -- "$test_dir/brew"; }
 fzf() {
@@ -29,6 +34,16 @@ set +e
 source "$repo_dir/zsh/.zshrc"
 set -e
 failures=0
+if [[ $options[completealiases] == off && ${_comps[gpsup]:-} == _git && ${_services[gpsup]:-} == git-push ]]; then
+  print 'PASS: alias expansion and gpsup Git-push completion configured'
+else
+  print -u2 'FAIL: alias expansion or gpsup completion missing'; (( failures += 1 ))
+fi
+if [[ ! ${+aliases[gp]} -eq 1 && ! ${+aliases[gpsup]} -eq 1 && ${+functions[gpsup]} -eq 1 ]]; then
+  print 'PASS: gpsup available without loading leftover Oh My Zsh files'
+else
+  print -u2 'FAIL: Git shortcuts still depend on Oh My Zsh'; (( failures += 1 ))
+fi
 if [[ ${_comps[review-command]:-} == _review_command ]]; then
   print 'PASS: Homebrew completion discovered'
 else

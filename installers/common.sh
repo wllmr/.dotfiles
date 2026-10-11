@@ -43,38 +43,6 @@ install_shared_config() {
   link_dotfile "$DOTFILES_DIR/vim/colors/oxocarbon.vim" "$HOME/.vim/colors/oxocarbon.vim"
 }
 
-# Install only the Git plugin and its dependencies, not the prompt/framework.
-# Pin the same upstream revision for Linux and macOS.
-install_git_shortcuts() {
-  local base="${1:-$HOME/.local/share/dotfiles/oh-my-zsh}"
-  local revision=60c9a7a839b790cd905d0fd4419435124fd1bdc0
-  local target="$base/$revision" staging file complete=1
-  for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
-    [[ -s "$target/$file" ]] || complete=0
-  done
-  if [[ "$complete" == 0 ]]; then
-    mkdir -p "$base"
-    staging="$(mktemp -d "$base/.download.XXXXXXXX")"
-    for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
-      mkdir -p "$staging/$(dirname "$file")"
-      if ! curl --fail --silent --show-error --location \
-        "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/$revision/$file" -o "$staging/$file" || [[ ! -s "$staging/$file" ]]; then
-        rm -rf -- "$staging"
-        log "ERROR: Unable to download the shared Git plugin"
-        return 1
-      fi
-    done
-    if [[ -e "$target" || -L "$target" ]]; then
-      local backup
-      backup="$(mktemp -d "$base/.incomplete.XXXXXXXX")"
-      mv "$target" "$backup/$revision"
-      log "Preserved incomplete Git plugin in $backup"
-    fi
-    mv "$staging" "$target"
-  fi
-  link_dotfile "$target" "$base/current"
-}
-
 configure_scm_breeze_config() {
   local config_dir="${1:-$HOME}"
   local target="$config_dir/.git.scmbrc" personal="$config_dir/.git.scmbrc.local"
@@ -121,6 +89,64 @@ install_scm_breeze() {
     rm -rf -- "$temp_zdotdir"
     return "$status"
   fi
+}
+
+# Configure SCM Breeze's native repository index, without rewriting personal code.
+configure_scm_repository_index() {
+  local interactive="${1:-0}" requested="${SCM_REPO_DIR:-}" current=''
+  if [[ -z "$requested" && "$interactive" != 1 ]]; then
+    log "Keeping existing SCM repository directory (use --repo-dir=PATH to configure c)."
+    return 0
+  fi
+  if [[ -z "$requested" ]]; then
+    current="$(zsh -f -c 'source "$HOME/.git.scmbrc"; print -r -- "${GIT_REPO_DIR:-}"')"
+    [[ -d "$current" ]] || current=''
+    if [[ -n "$current" ]]; then
+      printf 'Repository directory for c [%s]: ' "$current"
+    else
+      printf 'Repository directory for c (blank to skip): '
+    fi
+    IFS= read -r requested || requested=''
+    requested="${requested:-$current}"
+    if [[ -z "$requested" ]]; then
+      log "Skipping repository index setup."
+      return 0
+    fi
+  fi
+  case "$requested" in
+    '~') requested="$HOME" ;;
+    '~/'*) requested="$HOME/${requested#\~/}" ;;
+  esac
+  if [[ "$requested" == *$'\n'* || ! -d "$requested" ]]; then
+    log "ERROR: Repository directory must be an existing directory: $requested"
+    return 1
+  fi
+  requested="$(cd -- "$requested" && pwd -P)"
+  local index="$requested/.git_index"
+  if [[ ! -w "$requested" || ( ( -e "$index" || -L "$index" ) && ( ! -f "$index" || ! -w "$index" ) ) ]]; then
+    log "ERROR: Cannot write a repository index in $requested"
+    return 1
+  fi
+  log "Building SCM Breeze repository index in $requested"
+  if ! zsh -f -c '
+    autoload -Uz compinit
+    compinit -i -D
+    source "$HOME/.scm_breeze/scm_breeze.sh"
+    if (( ! $+functions[git_index] )); then
+      print -u2 "SCM Breeze repository index is not enabled. Check ~/.scmbrc."
+      exit 1
+    fi
+    export GIT_REPO_DIR="$1"
+    # Upstream can mask failed pipelines; enforce errors for the rebuild only.
+    setopt ERR_EXIT PIPE_FAIL
+    git_index --rebuild
+    [[ -f "$GIT_REPO_DIR/.git_index" && -r "$GIT_REPO_DIR/.git_index" ]]
+  ' repository-index "$requested"; then
+    log "ERROR: Repository index rebuild failed; saved directory is unchanged."
+    return 1
+  fi
+  mkdir -p "$HOME/.config/dotfiles"
+  printf '%s\n' "$requested" > "$HOME/.config/dotfiles/scm-repo-dir"
 }
 
 install_rust() {

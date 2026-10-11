@@ -4,6 +4,7 @@ parse_install_options() {
   INSTALL_DOCKER=0 INSTALL_CODEX=0 INSTALL_CLAUDE=0 INSTALL_HERDR=0
   INSTALL_NODE=0 INSTALL_PNPM=0 INSTALL_YARN=0 INSTALL_BUN=0
   NODE_VERSION='lts/*'
+  SCM_REPO_DIR=''
   local flag
   for flag in "$@"; do
     case "$flag" in
@@ -19,6 +20,10 @@ parse_install_options() {
       --no-yarn) INSTALL_YARN=0 ;;
       --no-bun) INSTALL_BUN=0 ;;
       --node-version=*) NODE_VERSION="${flag#*=}"; INSTALL_NODE=1 ;;
+      --repo-dir=*)
+        SCM_REPO_DIR="${flag#*=}"
+        if [[ -z "$SCM_REPO_DIR" ]]; then log "--repo-dir requires a directory"; return 2; fi
+        ;;
       --no-node) INSTALL_NODE=0; INSTALL_PNPM=0; INSTALL_YARN=0; INSTALL_BUN=0 ;;
       --with-herdr) INSTALL_HERDR=1 ;;
       --no-herdr) INSTALL_HERDR=0 ;;
@@ -34,4 +39,5 @@ parse_install_options() {
   # Codex requires Node even when the standalone Node selection is disabled.
   [[ "$INSTALL_CODEX" != 1 ]] || INSTALL_NODE=1
   export INSTALL_DOCKER INSTALL_CODEX INSTALL_CLAUDE INSTALL_HERDR INSTALL_NODE NODE_VERSION INSTALL_PNPM INSTALL_YARN INSTALL_BUN
+  export SCM_REPO_DIR
 }
