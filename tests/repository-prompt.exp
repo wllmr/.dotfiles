@@ -1,0 +1,31 @@
+set timeout 10
+set repo [lindex $argv 0]
+set mode [lindex $argv 1]
+spawn bash -c {set -euo pipefail; DOTFILES_DIR="$1"; source "$DOTFILES_DIR/installers/common.sh"; SCM_REPO_DIR=''; configure_scm_repository_index 1; printf "__PROMPT_SUCCESS__\n"} prompt $repo
+expect {
+    -re {Repository directory for c .*: } {}
+    timeout { puts stderr "FAIL: repository prompt did not appear"; exit 1 }
+    eof { puts stderr "FAIL: installer exited before the repository prompt"; exit 1 }
+}
+if {$mode eq "blank"} {
+    send -- "\r"
+} elseif {$mode eq "complete"} {
+    send -- "~/Proj\t\r"
+} else {
+    send -- "~/Documents\\ \t\t"
+    expect {
+        -re {Documents One/.*Documents Two/} {}
+        timeout { puts stderr "FAIL: double Tab did not list matching folders"; exit 1 }
+        eof { puts stderr "FAIL: installer exited before listing folders"; exit 1 }
+    }
+    # Clear the editing buffer and retain the valid current root with Enter.
+    send -- "\025\r"
+}
+expect {
+    __PROMPT_SUCCESS__ {}
+    timeout { puts stderr "FAIL: completed repository selection did not finish"; exit 1 }
+    eof { puts stderr "FAIL: completed repository selection was rejected"; exit 1 }
+}
+expect eof
+set result [wait]
+exit [lindex $result 3]

@@ -80,7 +80,7 @@ linux_installers() {
 
 fzf_menus() {
   # Load the real menus without executing package installation.
-  eval "$(sed -n '/^select_node_package_managers()/,/^source .*ai-tools.sh/p' "$DOTFILES_DIR/install.sh")"
+  eval "$(sed -n '/^select_node_package_managers()/,/^source .*developer-tools.sh/p' "$DOTFILES_DIR/install.sh")"
   INSTALL_NODE=0 INSTALL_PNPM=0
   fzf() {
     local arg
@@ -97,7 +97,7 @@ fzf_menus() {
 }
 
 fzf_menu_errors() {
-  eval "$(sed -n '/^select_node_package_managers()/,/^source .*ai-tools.sh/p' "$DOTFILES_DIR/install.sh")"
+  eval "$(sed -n '/^select_node_package_managers()/,/^source .*developer-tools.sh/p' "$DOTFILES_DIR/install.sh")"
   fzf() { cat >/dev/null; return 2; }
   local menu
   for menu in select_optional_tools select_node_package_managers; do
@@ -152,6 +152,59 @@ repository_index_setup() {
   )
 }
 
+macos_existing_packages() {
+  HOME="$test_dir/brew-home" bash -c '
+    set -euo pipefail
+    DOTFILES_DIR="$1"
+    source "$DOTFILES_DIR/installers/common.sh"
+    source "$DOTFILES_DIR/installers/macos.sh"
+    # Homebrew emits warnings but returns success for current packages.
+    brew() {
+      [[ "$1" == install ]] || return 1
+      printf "Warning: packages are already installed and up-to-date.\n" >&2
+      return 0
+    }
+    INSTALL_DOCKER=1
+    install_packages
+    install_optional_packages
+    install_packages
+    install_shared_config
+    [[ -r "$HOME/.zshrc" && -r "$HOME/.config/starship.toml" ]]
+  ' macos-rerun "$DOTFILES_DIR"
+}
+
+existing_node_setup() {
+  local fixture_home="$test_dir/node-home"
+  mkdir -p "$fixture_home/.nvm/alias"
+  cp "$DOTFILES_DIR/tests/fixtures/nvm-existing.sh" "$fixture_home/.nvm/nvm.sh"
+  printf 'v26.3.0\n' > "$fixture_home/.nvm/alias/default"
+  # A standalone Bash process keeps errexit active, unlike the check wrapper.
+  HOME="$fixture_home" bash -c '
+    set -euo pipefail
+    DOTFILES_DIR="$1"
+    source "$DOTFILES_DIR/installers/common.sh"
+    source "$DOTFILES_DIR/installers/developer-tools.sh"
+    INSTALL_NODE=1 INSTALL_CODEX=0 NODE_VERSION=24
+    install_optional_node
+    install_optional_node
+    install_shared_config
+    [[ "$(< "$HOME/.nvm/alias/default")" == v24.21.0 ]]
+    [[ -r "$HOME/.zshrc" && -r "$HOME/.config/starship.toml" ]]
+  ' node-setup "$DOTFILES_DIR" || return 1
+  local status=0
+  HOME="$fixture_home" NODE_INSTALL_FAILURE=1 bash -c '
+    set -euo pipefail
+    source "$1/installers/common.sh"
+    source "$1/installers/developer-tools.sh"
+    INSTALL_NODE=1 INSTALL_CODEX=0 NODE_VERSION=24
+    install_optional_node
+    exit 99
+  ' node-error "$DOTFILES_DIR" || status=$?
+  [[ "$status" == 7 ]]
+}
+
+check macos_existing_packages
+check existing_node_setup
 check checkout_migration
 check node_flag_dependencies
 check unique_backups
