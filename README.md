@@ -2,6 +2,8 @@
 
 Shared **Zsh + Starship** development environment for Arch Linux (including WSL2), Ubuntu (including Codespaces), Kali Linux, and macOS.
 
+Zsh uses Swedish regional formats (`sv_SE.UTF-8`) and English command messages (`LC_MESSAGES=C`). An inherited `LC_ALL` is cleared so it cannot override these choices. The Swedish UTF-8 locale must be available on the system; check with `locale -a`. Keyboard layout is configured separately in the operating system.
+
 ## Structure
 
 ```text
@@ -16,7 +18,8 @@ Shared **Zsh + Starship** development environment for Arch Linux (including WSL2
 │   └── common.sh
 ├── zsh/
 │   ├── .zshrc
-│   └── .zsh_aliases
+│   ├── .zsh_aliases
+│   └── .git.scmbrc
 ├── git/
 │   └── .gitconfig
 ├── vim/
@@ -83,6 +86,10 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 ## CLI tools
 
+Standard Git shortcuts come from Oh My Zsh's Git plugin, installed at the same pinned revision on all platforms. Only the plugin and its Git/clipboard libraries are loaded; Starship remains the prompt. `gp` pushes, `gl` pulls, and `gpsup` pushes the current branch to `origin` and sets its upstream. SCM Breeze's standard aliases are disabled, so its former `gps` push alias is replaced by `gp`. SCM Breeze retains `gs` (numbered status), `ga` (stage numbered files), `ge`, and other file helpers; its commit-all helper is available as `gcall` to avoid conflicting with the plugin's `gca`.
+
+The installer manages `~/.git.scmbrc` and preserves existing SCM Breeze preferences in `~/.git.scmbrc.local`, with a backup of the original file. Put personal SCM Breeze settings in the local file; alias ownership and helper names are enforced by the shared config to prevent collisions with the Git plugin. Run `bash install.sh` and then `exec zsh` on each machine to activate the shared command set.
+
 `rg` searches files, `fd` finds files, `jq` processes JSON, and `yq` v4 processes YAML. On Ubuntu/Kali, the `fd-find` executable is often named `fdfind`; shared setup links `~/.local/bin/fd` to that executable. The Go-based `yq` is used consistently instead of the differently implemented Debian `yq` package. If optional packages are unavailable, installation logs a warning.
 
 ## Optional Docker (no Docker Desktop)
@@ -128,7 +135,7 @@ yarn --version # if selected
 bun --version # if selected
 ```
 
-Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: no Oh My Zsh or Powerlevel10k required.
+Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: the full Oh My Zsh framework and Powerlevel10k are not loaded.
 
 For WSL, terminate and reopen your distribution from Windows PowerShell after installation. For terminal glyphs, use a Nerd Font in your terminal settings.
 

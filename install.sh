@@ -144,6 +144,7 @@ install_optional_herdr
 install_rust
 install_shared_config
 configure_fd
+install_git_shortcuts
 install_scm_breeze
 configure_default_shell
 log "Installation finished."
