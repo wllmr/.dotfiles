@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Optional AI developer tools. No authentication is performed by this installer.
+# Optional developer tools. No authentication is performed by this installer.
 # Node.js is installed via nvm only when selected (or required by Codex).
 install_optional_node() {
   if [[ "$INSTALL_NODE" != 1 && "$INSTALL_CODEX" != 1 ]]; then return; fi
@@ -13,16 +13,22 @@ install_optional_node() {
       log "ERROR: Unable to download nvm installer"
       return 1
     fi
-    PROFILE=/dev/null bash "$script"
+    # Bootstrap nvm only. Its installer otherwise auto-installs the exported
+    # NODE_VERSION, before our explicit installation/default selection below.
+    NODE_VERSION='' PROFILE=/dev/null bash "$script"
     rm -f "$script"
   fi
   if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
     log "ERROR: nvm was not installed successfully"
     return 1
   fi
-  # nvm is a shell function: loading it here exposes node/npm immediately.
+  # Load nvm without auto-selecting a possibly missing previous default.
+  # Install and select the requested version explicitly below.
   # shellcheck disable=SC1091
-  source "$NVM_DIR/nvm.sh"
+  source "$NVM_DIR/nvm.sh" --no-use
+  # Older nvm keeps an inherited bin entry in place, even behind Homebrew.
+  # Remove it first so selecting Node prepends its bin directory to PATH.
+  nvm deactivate --silent
   nvm install "$NODE_VERSION"
   # Pin the actual installed version as the default for future shells.
   local installed_version

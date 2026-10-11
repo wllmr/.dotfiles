@@ -102,11 +102,17 @@ configure_scm_repository_index() {
     current="$(zsh -f -c 'source "$HOME/.git.scmbrc"; print -r -- "${GIT_REPO_DIR:-}"')"
     [[ -d "$current" ]] || current=''
     if [[ -n "$current" ]]; then
-      printf 'Repository directory for c [%s]: ' "$current"
+      printf 'Repository directory for c [%s] (Tab to complete): ' "$current"
     else
-      printf 'Repository directory for c (blank to skip): '
+      printf 'Repository directory for c (Tab to complete; blank to skip): '
     fi
-    IFS= read -r requested || requested=''
+    if [[ -t 0 ]]; then
+      # Readline escapes completed filenames (e.g. spaces); read decodes those
+      # escapes without evaluating shell expressions. Piped input stays literal.
+      IFS= read -e requested || requested=''
+    else
+      IFS= read -r requested || requested=''
+    fi
     requested="${requested:-$current}"
     if [[ -z "$requested" ]]; then
       log "Skipping repository index setup."

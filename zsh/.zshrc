@@ -16,7 +16,13 @@ fi
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 # nvm is a shell function; initialize it for interactive Zsh sessions.
 export NVM_DIR="$HOME/.nvm"
-[[ -s "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  source "$NVM_DIR/nvm.sh" --no-use
+  # Homebrew may precede an inherited nvm bin entry. Reset before selecting
+  # the saved default so older nvm also puts the selected Node first.
+  nvm deactivate --silent
+  nvm use --silent default
+fi
 export EDITOR=vim
 export VISUAL=vim
 HISTFILE="$HOME/.zsh_history"

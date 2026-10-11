@@ -14,7 +14,7 @@ Zsh uses Swedish regional formats (`sv_SE.UTF-8`) and English command messages (
 │   ├── ubuntu.sh
 │   ├── kali.sh
 │   ├── macos.sh
-│   ├── ai-tools.sh
+│   ├── developer-tools.sh
 │   ├── options.sh
 │   ├── debian.sh
 │   └── common.sh
@@ -66,6 +66,10 @@ After base packages are installed, an `fzf` multi-select menu lets you select Do
 
 **Node.js:** installed through nvm. Selecting Node or Codex prompts for the desired Node.js version (for example `22`, `24`, `22.14.0`, or `lts/*`); pressing Enter selects the latest LTS. The installed version is set as the **nvm default** for future shell sessions. When running non-interactively, use `--node-version=VERSION` (which also enables Node installation). Zsh loads nvm automatically. Selecting Codex installs Node.js first if needed.
 
+The setup bootstraps nvm without automatically installing Node, then loads it without activating a previous default. It explicitly installs/selects the requested Node version and replaces the saved default. Already-installed packages are safe to reuse; genuine installation errors still stop the script.
+
+Installation and Zsh startup reset inherited nvm PATH entries through `nvm deactivate` before selecting Node. This prevents older nvm versions from leaving Homebrew's Node ahead of the selected nvm version. Homebrew Node does not need to be uninstalled. New Zsh sessions activate the saved nvm default.
+
 **Package managers:** npm comes with Node.js automatically. After selecting a Node version, a second fzf multi-select lets you additionally install **pnpm**, **Yarn**, and/or **Bun**. You can choose more than one. pnpm and Yarn use Corepack (installed separately if Node does not bundle it), allowing projects to pin their package manager versions. Bun is installed using the supported npm package into the chosen nvm Node installation.
 
 For unattended installs, use `--with-pnpm`, `--with-yarn`, or `--with-bun` (each also selects Node.js). For example:
@@ -98,7 +102,7 @@ The installer manages `~/.git.scmbrc` and preserves existing SCM Breeze preferen
 
 ### Repository jumping and completion
 
-Interactive installation asks for the existing directory containing your repositories, then builds SCM Breeze's native index. Press Enter to retain a valid current directory, or to skip when none is configured. For unattended setup, provide the directory explicitly:
+Interactive installation asks for the existing directory containing your repositories, then builds SCM Breeze's native index. Use Tab to complete paths (for example `~/Doc`); press Tab again to list ambiguous matches. Native Bash filename completion shows both files and folders, but the installer accepts only existing directories. Names containing spaces are supported. Press Enter to retain a valid current directory, or to skip when none is configured. For unattended setup, provide the directory explicitly:
 
 ```bash
 bash install.sh --repo-dir="$HOME/Documents"
@@ -133,9 +137,21 @@ Run regression checks without installing packages or changing personal configura
 bash tests/setup.sh
 zsh -f tests/shell.zsh
 bash tests/git-tools.sh
+bash tests/node-path.sh
+bash tests/repository-prompt.sh
 ```
 
 The Git integration test uses the complete installed SCM Breeze implementation in an isolated home directory; if SCM Breeze is absent, that part reports a skip. It tests `gpsup` against a temporary local bare repository, without pushing to an external remote. No plugin downloads are needed. Linux package-manager calls are simulated in the offline tests; a full Linux installation still needs verification on Linux.
+
+The offline Node PATH test uses installed nvm and Node 24 in an isolated home with a competing system-Node fixture. It checks installation and managed Zsh startup; if nvm or Node 24 is absent, it reports a skip.
+
+The repository-prompt test uses a real terminal to check Tab completion, folder listing, names with spaces, and blank input. It reports a skip if `expect` or SCM Breeze is absent; neither is downloaded by the test.
+
+For real nvm/Node integration, run the opt-in network test. It downloads nvm and Node 24 into a temporary home, checks fresh installation, stale-default recovery, reruns, and activation in a new Bash process, then removes the temporary installation. It does not change your installed Node versions or personal settings:
+
+```bash
+RUN_NODE_INTEGRATION=1 bash tests/node-tools.sh
+```
 
 ```bash
 zsh --version

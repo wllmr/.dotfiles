@@ -93,7 +93,7 @@ select_optional_tools() {
   esac
 }
 
-source "$DOTFILES_DIR/installers/ai-tools.sh"
+source "$DOTFILES_DIR/installers/developer-tools.sh"
 
 install_packages
 if [[ $# -eq 0 && -t 0 && -t 1 ]]; then
