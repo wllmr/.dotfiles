@@ -27,37 +27,6 @@ checkout_migration() {
   [[ "$(< "$test_dir/user/.git.scmbrc.local")" == 'export GS_MAX_CHANGES=42' ]]
 }
 
-repair_plugin() {
-  mkdir -p "$test_dir/plugin/60c9a7a839b790cd905d0fd4419435124fd1bdc0"
-  # Replace only the network boundary with deterministic downloaded content.
-  curl() { while [[ $# -gt 0 ]]; do if [[ "$1" == -o ]]; then printf '# downloaded\n' > "$2"; return; fi; shift; done; return 1; }
-  install_git_shortcuts "$test_dir/plugin"
-  for file in lib/git.zsh lib/clipboard.zsh plugins/git/git.plugin.zsh; do
-    [[ -s "$test_dir/plugin/current/$file" ]] || return 1
-  done
-  curl() { return 1; }
-  install_git_shortcuts "$test_dir/plugin"
-}
-
-failed_plugin_downloads() {
-  local base="$test_dir/failed-plugin"
-  local target="$base/60c9a7a839b790cd905d0fd4419435124fd1bdc0"
-  mkdir -p "$target/lib" "$base/known-good"
-  printf 'existing partial content\n' > "$target/lib/git.zsh"
-  ln -s "$base/known-good" "$base/current"
-  # A network error and an empty HTTP success must both reject the download.
-  curl() { return 1; }
-  if install_git_shortcuts "$base"; then return 1; fi
-  [[ "$(readlink "$base/current")" == "$base/known-good" ]] || return 1
-  [[ "$(< "$target/lib/git.zsh")" == 'existing partial content' ]] || return 1
-  curl() { return 0; }
-  if install_git_shortcuts "$base"; then return 1; fi
-  [[ "$(readlink "$base/current")" == "$base/known-good" ]] || return 1
-  [[ "$(< "$target/lib/git.zsh")" == 'existing partial content' ]] || return 1
-  local staging=( "$base"/.download.* )
-  [[ ! -e "${staging[0]}" ]]
-}
-
 node_flag_dependencies() {
   source "$DOTFILES_DIR/installers/options.sh" || return 1
   parse_install_options --with-pnpm --with-yarn --with-bun --no-node || return 1
@@ -67,6 +36,9 @@ node_flag_dependencies() {
   parse_install_options --with-codex --no-node || return 1
   [[ "$INSTALL_NODE:$INSTALL_CODEX" == 1:1 ]] || return 1
   if parse_install_options --node-version=invalid; then return 1; fi
+  parse_install_options --repo-dir='/tmp/projects with spaces' || return 1
+  [[ "$SCM_REPO_DIR" == '/tmp/projects with spaces' ]] || return 1
+  if parse_install_options --repo-dir=; then return 1; fi
 }
 
 unique_backups() {
@@ -135,12 +107,56 @@ fzf_menu_errors() {
   select_optional_tools && select_node_package_managers
 }
 
+repository_index_setup() {
+  local scm_dir="$HOME/.scm_breeze"
+  if [[ ! -s "$scm_dir/scm_breeze.sh" ]]; then
+    printf 'SKIP: repository index integration (SCM Breeze not installed)\n'
+    return
+  fi
+  local fixture_home="$test_dir/index-home" root="$test_dir/projects with spaces"
+  mkdir -p "$fixture_home" "$root"
+  root="$(cd "$root" && pwd -P)"
+  ln -s "$root" "$fixture_home/projects"
+  ln -s "$scm_dir" "$fixture_home/.scm_breeze"
+  ln -s "$scm_dir/scmbrc.example" "$fixture_home/.scmbrc"
+  ln -s "$DOTFILES_DIR/zsh/.git.scmbrc" "$fixture_home/.git.scmbrc"
+  printf 'export GS_MAX_CHANGES=42\n' > "$fixture_home/.git.scmbrc.local"
+  git init -q "$root/project"
+  (
+    export HOME="$fixture_home"
+    SCM_REPO_DIR=''
+    configure_scm_repository_index 0 || return 1
+    [[ ! -e "$HOME/.config/dotfiles/scm-repo-dir" ]] || return 1
+    configure_scm_repository_index 1 <<< '' || return 1
+    [[ ! -e "$HOME/.config/dotfiles/scm-repo-dir" ]] || return 1
+    # The interactive input path accepts a directory and saves it once.
+    configure_scm_repository_index 1 <<< "$root" || return 1
+    [[ "$(< "$HOME/.config/dotfiles/scm-repo-dir")" == "$root" ]] || return 1
+    grep -Fxq "$root/project" "$root/.git_index" || return 1
+    [[ "$(< "$HOME/.git.scmbrc.local")" == 'export GS_MAX_CHANGES=42' ]] || return 1
+    configure_scm_repository_index 1 <<< '' || return 1
+    [[ "$(< "$HOME/.config/dotfiles/scm-repo-dir")" == "$root" ]] || return 1
+    # A noninteractive rerun preserves the selected directory.
+    configure_scm_repository_index 0 || return 1
+    [[ "$(< "$HOME/.config/dotfiles/scm-repo-dir")" == "$root" ]] || return 1
+    SCM_REPO_DIR="$test_dir/blocked-index"
+    mkdir -p "$SCM_REPO_DIR/.git_index"
+    if configure_scm_repository_index 0; then return 1; fi
+    [[ "$(< "$HOME/.config/dotfiles/scm-repo-dir")" == "$root" ]] || return 1
+    SCM_REPO_DIR="$root/missing"
+    if configure_scm_repository_index 0; then return 1; fi
+    [[ "$(< "$HOME/.config/dotfiles/scm-repo-dir")" == "$root" ]] || return 1
+    SCM_REPO_DIR='~/projects'
+    configure_scm_repository_index 0 || return 1
+    zsh -f -c 'autoload -Uz compinit; compinit -i -D; source "$HOME/.scm_breeze/scm_breeze.sh"; [[ ${_comps[c]} == _git_index_tab_completion ]] || exit 1; eval "c project"; [[ "$PWD" == "$1" ]]' check "$root/project"
+  )
+}
+
 check checkout_migration
-check repair_plugin
-check failed_plugin_downloads
 check node_flag_dependencies
 check unique_backups
 check linux_installers
 check fzf_menus
 check fzf_menu_errors
+check repository_index_setup
 exit "$failures"

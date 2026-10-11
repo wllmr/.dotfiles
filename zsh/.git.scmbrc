@@ -2,17 +2,13 @@
 source "$HOME/.scm_breeze/git.scmbrc.example"
 [[ -r "$HOME/.git.scmbrc.local" ]] && source "$HOME/.git.scmbrc.local"
 
-# Oh My Zsh's Git plugin owns standard Git shortcuts on every platform.
-# Keep helper names consistent too: a personal helper named gp or gl would
-# otherwise overwrite the Git plugin even with standard SCM aliases disabled.
-export GIT_SETUP_ALIASES="no"
-git_alias="g"
-git_status_shortcuts_alias="gs"
-git_add_shortcuts_alias="ga"
-exec_scmb_expand_args_alias="ge"
-git_show_files_alias="gsf"
-git_grep_shortcuts_alias="gtrep"
-git_reset_last_commit="grsl"
-git_index_alias="c"
-# Avoid replacing the Git plugin's gca (git commit --verbose --all).
-git_commit_all_alias="gcall"
+# Machine-local repository root selected by the installer (plain path, not code).
+if [[ -r "$HOME/.config/dotfiles/scm-repo-dir" ]]; then
+  scm_repo_dir="$(< "$HOME/.config/dotfiles/scm-repo-dir")"
+  [[ -z "$scm_repo_dir" ]] || export GIT_REPO_DIR="$scm_repo_dir"
+  unset scm_repo_dir
+fi
+
+# SCM Breeze is the only Git-alias provider. Keep its upstream command names;
+# personal settings may customize them, but standard aliases remain enabled.
+export GIT_SETUP_ALIASES="yes"

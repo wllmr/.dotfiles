@@ -90,9 +90,25 @@ The Oxocarbon reference theme targets Neovim only. This repository includes a na
 
 ## CLI tools
 
-Standard Git shortcuts come from Oh My Zsh's Git plugin, installed at the same pinned revision on all platforms. Only the plugin and its Git/clipboard libraries are loaded; Starship remains the prompt. `gp` pushes, `gl` pulls, and `gpsup` pushes the current branch to `origin` and sets its upstream. SCM Breeze's standard aliases are disabled, so its former `gps` push alias is replaced by `gp`. SCM Breeze retains `gs` (numbered status), `ga` (stage numbered files), `ge`, and other file helpers; its commit-all helper is available as `gcall` to avoid conflicting with the plugin's `gca`.
+SCM Breeze is the sole Git-alias provider; its upstream defaults are enabled on every platform. `gpl` pulls, `gps` pushes, `gl` shows formatted Git history, `gs` shows numbered status, and `ga` stages numbered files. `gca` is SCM Breeze's stage-and-commit-all helper, `gcm` amends a commit, and `gap` stages changes interactively. Starship remains the prompt; the Oh My Zsh Git plugin is neither installed nor loaded.
 
-The installer manages `~/.git.scmbrc` and preserves existing SCM Breeze preferences in `~/.git.scmbrc.local`, with a backup of the original file. Put personal SCM Breeze settings in the local file; alias ownership and helper names are enforced by the shared config to prevent collisions with the Git plugin. Run `bash install.sh` and then `exec zsh` on each machine to activate the shared command set.
+The only custom Git shortcut is `gpsup`, a function running `git push --set-upstream origin HEAD` to push the current branch and establish its upstream. Additional Git push arguments are forwarded, for example `gpsup --dry-run`. It requires an `origin` remote and a checked-out branch. Use `gps` for ordinary pushes; there is no managed `gp` or `gcall` alias.
+
+The installer manages `~/.git.scmbrc` and preserves existing SCM Breeze preferences in `~/.git.scmbrc.local`, with a backup of the original file. Put personal SCM Breeze settings in the local file; these can override upstream alias names, but standard aliases remain enabled. Run `bash install.sh` and then `exec zsh` on each machine to activate the shared command set. Start a fresh shell rather than merely sourcing `.zshrc`, so old Git-plugin aliases do not remain in memory. Previously downloaded Oh My Zsh files may remain on disk, but are unused.
+
+### Repository jumping and completion
+
+Interactive installation asks for the existing directory containing your repositories, then builds SCM Breeze's native index. Press Enter to retain a valid current directory, or to skip when none is configured. For unattended setup, provide the directory explicitly:
+
+```bash
+bash install.sh --repo-dir="$HOME/Documents"
+```
+
+The selected path is saved as plain text in `~/.config/dotfiles/scm-repo-dir`, separate from personal SCM Breeze preferences, and takes precedence over their `GIT_REPO_DIR`. Non-interactive runs without `--repo-dir` leave the setting unchanged and do not rebuild the index. Invalid directories are rejected without replacing the saved path.
+
+In a fresh shell, `c` goes to the selected root, `c project` jumps to a matching repository, and `c --rebuild` refreshes the index after adding projects. No Autojump installation is needed. Zoxide's `z`/`zi` remain available for general directory navigation.
+
+Zsh explicitly expands aliases for completion (`NO_COMPLETE_ALIASES`), and the custom `gpsup` function uses Git push completion. Completion still requires successful `compinit`; if it reports insecure Homebrew directories, inspect them with `compaudit` and fix their ownership/permissions rather than bypassing the security check.
 
 `rg` searches files, `fd` finds files, `jq` processes JSON, and `yq` v4 processes YAML. On Ubuntu/Kali, the `fd-find` executable is often named `fdfind`; shared setup links `~/.local/bin/fd` to that executable. The Go-based `yq` is used consistently instead of the differently implemented Debian `yq` package. If optional packages are unavailable, installation logs a warning.
 
@@ -119,7 +135,7 @@ zsh -f tests/shell.zsh
 bash tests/git-tools.sh
 ```
 
-The Git integration test downloads the pinned plugin files. It checks SCM Breeze aliases when SCM Breeze is installed; otherwise that part reports a skip. Linux package-manager calls are simulated in the offline tests; a full Linux installation still needs verification on Linux.
+The Git integration test uses the complete installed SCM Breeze implementation in an isolated home directory; if SCM Breeze is absent, that part reports a skip. It tests `gpsup` against a temporary local bare repository, without pushing to an external remote. No plugin downloads are needed. Linux package-manager calls are simulated in the offline tests; a full Linux installation still needs verification on Linux.
 
 ```bash
 zsh --version
@@ -149,7 +165,7 @@ yarn --version # if selected
 bun --version # if selected
 ```
 
-Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt: the full Oh My Zsh framework and Powerlevel10k are not loaded.
+Authenticate separately with `gh auth login`. Never commit credentials or SSH private keys. Starship is the only prompt; Oh My Zsh and Powerlevel10k are not loaded.
 
 For WSL, terminate and reopen your distribution from Windows PowerShell after installation. For terminal glyphs, use a Nerd Font in your terminal settings.
 

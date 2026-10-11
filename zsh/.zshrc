@@ -24,6 +24,7 @@ HISTSIZE=50000
 SAVEHIST=50000
 setopt APPEND_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
 setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS
+setopt NO_COMPLETE_ALIASES
 bindkey -e
 
 # Configure completion before the first completion initialization.
@@ -38,22 +39,11 @@ zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 [[ -r "$HOME/.zsh_aliases" ]] && source "$HOME/.zsh_aliases"
-
-# Standard Git shortcuts come from a pinned Oh My Zsh Git plugin.
-# Starship owns the prompt, so the Git library's async prompt is disabled.
-git_plugin_dir="$HOME/.local/share/dotfiles/oh-my-zsh/current"
-if [[ -s "$git_plugin_dir/plugins/git/git.plugin.zsh" &&
-      -s "$git_plugin_dir/lib/git.zsh" && -s "$git_plugin_dir/lib/clipboard.zsh" ]]; then
-  zstyle ':omz:alpha:lib:git' async-prompt no
-  source "$git_plugin_dir/lib/git.zsh"
-  source "$git_plugin_dir/lib/clipboard.zsh"
-  source "$git_plugin_dir/plugins/git/git.plugin.zsh"
-else
-  print -u2 'Git shortcuts are not installed. Run bash install.sh from your dotfiles repository.'
+if (( $+functions[compdef] && $+functions[gpsup] )); then
+  compdef _git gpsup=git-push
 fi
-unset git_plugin_dir
 
-# SCM Breeze adds numbered file helpers; managed settings disable standard aliases.
+# SCM Breeze owns Git aliases and numbered file helpers; Starship owns the prompt.
 [[ -s "$HOME/.scm_breeze/scm_breeze.sh" ]] && source "$HOME/.scm_breeze/scm_breeze.sh"
 
 if (( $+commands[fzf] )); then
