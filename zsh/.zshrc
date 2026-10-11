@@ -27,6 +27,11 @@ setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS
 bindkey -e
 
 # Configure completion before the first completion initialization.
+if (( $+commands[brew] || $+functions[brew] )); then
+  completion_dir="$(brew --prefix)/share/zsh-completions"
+  [[ ! -d "$completion_dir" ]] || fpath=("$completion_dir" $fpath)
+  unset completion_dir
+fi
 autoload -Uz compinit
 compinit
 zstyle ':completion:*' menu select
@@ -37,7 +42,8 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 # Standard Git shortcuts come from a pinned Oh My Zsh Git plugin.
 # Starship owns the prompt, so the Git library's async prompt is disabled.
 git_plugin_dir="$HOME/.local/share/dotfiles/oh-my-zsh/current"
-if [[ -r "$git_plugin_dir/plugins/git/git.plugin.zsh" ]]; then
+if [[ -s "$git_plugin_dir/plugins/git/git.plugin.zsh" &&
+      -s "$git_plugin_dir/lib/git.zsh" && -s "$git_plugin_dir/lib/clipboard.zsh" ]]; then
   zstyle ':omz:alpha:lib:git' async-prompt no
   source "$git_plugin_dir/lib/git.zsh"
   source "$git_plugin_dir/lib/clipboard.zsh"
@@ -51,12 +57,18 @@ unset git_plugin_dir
 [[ -s "$HOME/.scm_breeze/scm_breeze.sh" ]] && source "$HOME/.scm_breeze/scm_breeze.sh"
 
 if (( $+commands[fzf] )); then
-  if fzf --zsh >/dev/null 2>&1; then
-    source <(fzf --zsh)
-  elif [[ -f /usr/share/fzf/key-bindings.zsh ]]; then
-    source /usr/share/fzf/key-bindings.zsh
-    [[ -r /usr/share/fzf/completion.zsh ]] && source /usr/share/fzf/completion.zsh
+  if fzf_init=$(fzf --zsh 2>/dev/null); then
+    eval "$fzf_init"
+  else
+    for fzf_dir in /usr/share/fzf /usr/share/doc/fzf/examples; do
+      if [[ -r "$fzf_dir/key-bindings.zsh" ]]; then
+        source "$fzf_dir/key-bindings.zsh"
+        [[ ! -r "$fzf_dir/completion.zsh" ]] || source "$fzf_dir/completion.zsh"
+        break
+      fi
+    done
   fi
+  unset fzf_init fzf_dir
 fi
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
 (( $+commands[starship] )) && eval "$(starship init zsh)"

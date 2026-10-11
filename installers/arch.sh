@@ -8,13 +8,3 @@ install_optional_packages() {
     sudo pacman -S --needed docker docker-compose
   fi
 }
-
-configure_default_shell() {
-  local desired current
-  desired="$(command -v zsh)"
-  current="$(getent passwd "$(id -un)" | cut -d: -f7)"
-  if [[ "$current" != "$desired" ]]; then
-    sudo usermod --shell "$desired" "$(id -un)"
-    log "Set default shell to $desired"
-  fi
-}
